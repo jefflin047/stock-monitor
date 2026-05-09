@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>日常飲食 — Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <style>
+    body { background: #0f1117; color: #e0e0e0; font-family: 'Segoe UI', system-ui, sans-serif; }
+    .navbar { background: #1a1d27 !important; border-bottom: 1px solid #2a2d3a; }
+    .navbar-brand { font-weight: 700; font-size: 1.3rem; color: #60a5fa !important; }
+    .nav-link-custom { color: #9ca3af; text-decoration: none; padding: 6px 14px; border-radius: 8px; font-size: 0.9rem; transition: all .15s; }
+    .nav-link-custom:hover { background: #2a2d3a; color: #a78bfa; }
+    .nav-link-custom.active { background: #2a2d3a; color: #60a5fa; }
+
+    .main-tab-bar { display: flex; gap: 4px; border-bottom: 1px solid #2a2d3a; margin-bottom: 24px; }
+    .main-tab-btn { padding: 10px 22px; font-size: 0.92rem; font-weight: 600; color: #9ca3af; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; }
+    .main-tab-btn.active { color: #60a5fa; border-bottom-color: #60a5fa; }
+
+    .tool-bar { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .search-inp { background: #0f1117; border: 1px solid #374151; color: #e0e0e0; border-radius: 8px; padding: 7px 14px; font-size: 0.85rem; flex: 1; min-width: 150px; }
+    .search-inp:focus { outline: none; border-color: #60a5fa; }
+    .btn-add { background: #1d4ed8; border: none; color: white; border-radius: 8px; padding: 7px 16px; font-size: 0.85rem; cursor: pointer; font-weight: 500; white-space: nowrap; }
+    .btn-add:hover { background: #2563eb; }
+    .pill { padding: 4px 13px; border-radius: 99px; font-size: 0.75rem; cursor: pointer; border: 1px solid #374151; color: #9ca3af; background: none; }
+    .pill.active { background: rgba(96,165,250,.1); border-color: #60a5fa; color: #60a5fa; }
+
+    .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+    .chip { padding: 3px 12px; border-radius: 99px; font-size: 0.73rem; font-weight: 500; cursor: pointer; border: 1px solid #374151; color: #9ca3af; background: none; }
+    .chip.active, .chip:hover { background: rgba(167,139,250,.1); border-color: #a78bfa; color: #a78bfa; }
+
+    /* Recipe card */
+    .recipe-card { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 12px; overflow: hidden; cursor: pointer; transition: border-color .15s, transform .1s; height: 100%; display: flex; flex-direction: column; }
+    .recipe-card:hover { border-color: #374151; transform: translateY(-2px); }
+    .recipe-img-wrap { width: 100%; height: 155px; background: #1e2130; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .recipe-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+    .recipe-img-ph { font-size: 2.8rem; color: #2a2d3a; }
+    .recipe-body { padding: 12px 14px 14px; flex: 1; }
+    .recipe-name { font-size: 0.95rem; font-weight: 700; color: #f1f5f9; }
+    .recipe-sub { font-size: 0.72rem; color: #6b7280; margin-top: 3px; }
+    .rtag { display: inline-block; font-size: 0.62rem; padding: 2px 8px; border-radius: 99px; margin-top: 6px; margin-right: 4px; font-weight: 500; }
+    .rtag-ing { background: rgba(167,139,250,.12); color: #a78bfa; }
+    .rtag-cat { background: rgba(52,211,153,.12); color: #34d399; }
+
+    /* Restaurant card */
+    .rest-card { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 12px; padding: 16px; transition: border-color .15s; height: 100%; cursor: pointer; }
+    .rest-card:hover { border-color: #374151; }
+    .rest-name { font-size: 0.98rem; font-weight: 700; color: #f1f5f9; }
+    .rest-cuisine { font-size: 0.72rem; color: #9ca3af; margin-top: 2px; }
+    .rest-stars { font-size: 0.88rem; margin: 6px 0 4px; }
+    .rest-info-row { font-size: 0.75rem; color: #9ca3af; display: flex; gap: 6px; align-items: flex-start; margin-top: 5px; }
+    .rest-info-icon { color: #6b7280; flex-shrink: 0; font-size: 0.82rem; margin-top: 1px; }
+    .badge-visited { background: rgba(52,211,153,.12); color: #34d399; font-size: 0.62rem; padding: 2px 8px; border-radius: 99px; font-weight: 600; border: 1px solid rgba(52,211,153,.25); }
+    .badge-want { background: rgba(251,191,36,.08); color: #fbbf24; font-size: 0.62rem; padding: 2px 8px; border-radius: 99px; font-weight: 600; border: 1px solid rgba(251,191,36,.25); }
+    .btn-map-link { font-size: 0.72rem; padding: 3px 10px; border-radius: 6px; border: 1px solid #374151; background: none; color: #60a5fa; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+    .btn-map-link:hover { background: #1e2130; color: #60a5fa; }
+
+    /* ── Custom Modal ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.65); z-index: 1050;
+      align-items: flex-start; justify-content: center;
+      padding: 40px 16px; overflow-y: auto;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 14px;
+      width: 100%; max-width: 780px; display: flex; flex-direction: column;
+      max-height: calc(100vh - 80px);
+    }
+    .modal-box-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 20px; border-bottom: 1px solid #2a2d3a; flex-shrink: 0;
+    }
+    .modal-box-title { font-size: 1rem; font-weight: 700; color: #f1f5f9; flex: 1; }
+    .modal-box-body { flex: 1; overflow-y: auto; padding: 20px; }
+    .modal-box-footer {
+      display: flex; justify-content: flex-end; gap: 8px;
+      padding: 12px 20px; border-top: 1px solid #2a2d3a; flex-shrink: 0;
+    }
+    .modal-box-footer.hidden { display: none; }
+    .btn-close-modal { background: none; border: none; color: #6b7280; font-size: 1.1rem; cursor: pointer; padding: 0 4px; line-height: 1; }
+    .btn-close-modal:hover { color: #e0e0e0; }
+
+    /* Form elements */
+    .form-control, .form-select { background: #0f1117; border: 1px solid #374151; color: #e0e0e0; font-size: 0.83rem; border-radius: 8px; padding: 6px 10px; width: 100%; box-sizing: border-box; }
+    .form-control:focus, .form-select:focus { outline: none; border-color: #60a5fa; }
+    textarea.form-control { resize: vertical; }
+    .form-label { font-size: 0.73rem; color: #9ca3af; margin-bottom: 4px; display: block; }
+    .form-check-label { font-size: 0.82rem; color: #9ca3af; }
+    .mb-3 { margin-bottom: 14px; }
+
+    .sec-title { font-size: 0.68rem; text-transform: uppercase; letter-spacing: .08em; color: #6b7280; padding-bottom: 6px; border-bottom: 1px solid #2a2d3a; margin-bottom: 10px; margin-top: 18px; }
+
+    /* Detail view */
+    .ing-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #1e2130; font-size: 0.84rem; }
+    .ing-item:last-child { border-bottom: none; }
+    .ing-check { width: 15px; height: 15px; accent-color: #60a5fa; cursor: pointer; flex-shrink: 0; }
+    .step-row { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid #1e2130; }
+    .step-row:last-child { border-bottom: none; }
+    .step-num { width: 22px; height: 22px; border-radius: 50%; background: #1d4ed8; color: white; font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 3px; }
+    .step-txt { font-size: 0.84rem; color: #d1d5db; line-height: 1.6; }
+    .notes-display { background: #0f1117; border-radius: 8px; padding: 12px; font-size: 0.82rem; color: #d1d5db; line-height: 1.7; white-space: pre-wrap; }
+    .link-item { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid #1e2130; font-size: 0.82rem; }
+    .link-item:last-child { border-bottom: none; }
+    .link-item a { color: #60a5fa; text-decoration: none; }
+    .link-item a:hover { text-decoration: underline; }
+
+    /* View tabs */
+    .vtab-bar { display: flex; gap: 2px; border-bottom: 1px solid #2a2d3a; margin-bottom: 14px; }
+    .vtab-btn { padding: 7px 14px; font-size: 0.82rem; color: #9ca3af; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; }
+    .vtab-btn.active { color: #60a5fa; border-bottom-color: #60a5fa; }
+
+    /* Photos */
+    .photo-strip { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 12px; }
+    .photo-thumb { width: 88px; height: 88px; border-radius: 8px; object-fit: cover; cursor: pointer; border: 2px solid transparent; flex-shrink: 0; }
+    .photo-thumb.active { border-color: #60a5fa; }
+    .photo-main { width: 100%; max-height: 260px; object-fit: contain; border-radius: 10px; background: #0f1117; margin-bottom: 10px; display: block; }
+    .photo-rel { position: relative; flex-shrink: 0; }
+    .photo-del { position: absolute; top: 3px; right: 3px; background: rgba(0,0,0,.75); border: none; color: #f87171; border-radius: 50%; width: 18px; height: 18px; font-size: 0.6rem; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; line-height: 1; }
+    .upload-thumb { width: 88px; height: 88px; border-radius: 8px; border: 2px dashed #374151; background: none; color: #6b7280; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.65rem; gap: 4px; flex-shrink: 0; }
+    .upload-thumb:hover { border-color: #60a5fa; color: #60a5fa; }
+
+    /* Edit rows */
+    .edit-row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+    .edit-row input, .edit-row textarea { flex: 1; background: #0f1117; border: 1px solid #374151; color: #e0e0e0; border-radius: 8px; padding: 5px 9px; font-size: 0.82rem; }
+    .edit-row input:focus, .edit-row textarea:focus { outline: none; border-color: #60a5fa; }
+    .edit-row.top { align-items: flex-start; }
+    .btn-del-row { background: none; border: none; color: #6b7280; cursor: pointer; padding: 2px 4px; font-size: 0.8rem; flex-shrink: 0; }
+    .btn-del-row:hover { color: #f87171; }
+    .btn-add-row { width: 100%; background: none; border: 1px dashed #374151; color: #6b7280; border-radius: 6px; padding: 5px; font-size: 0.75rem; cursor: pointer; margin-top: 2px; }
+    .btn-add-row:hover { border-color: #60a5fa; color: #60a5fa; }
+    .link-row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+    .link-row input { background: #0f1117; border: 1px solid #374151; color: #e0e0e0; border-radius: 8px; padding: 5px 9px; font-size: 0.82rem; }
+    .link-row input:focus { outline: none; border-color: #60a5fa; }
+    .lbl-inp { width: 120px !important; flex-shrink: 0; }
+
+    .star-picker { display: flex; gap: 4px; }
+    .star-picker i { font-size: 1.3rem; cursor: pointer; }
+    .empty-ph { text-align: center; padding: 60px 20px; color: #6b7280; }
+
+    .btn-outline-sm { background: none; border: 1px solid #374151; color: #9ca3af; border-radius: 6px; padding: 5px 13px; font-size: 0.78rem; cursor: pointer; }
+    .btn-outline-sm:hover { background: #1e2130; color: #e0e0e0; }
+    .btn-danger-sm { background: none; border: 1px solid rgba(248,113,113,.4); color: #f87171; border-radius: 6px; padding: 5px 13px; font-size: 0.78rem; cursor: pointer; }
+    .btn-danger-sm:hover { background: rgba(248,113,113,.08); }
+    .btn-save { background: #1d4ed8; border: none; color: white; border-radius: 8px; padding: 7px 20px; font-size: 0.85rem; cursor: pointer; font-weight: 500; }
+    .btn-save:hover { background: #2563eb; }
+    .rest-detail-row { display: flex; gap: 10px; align-items: flex-start; padding: 7px 0; border-bottom: 1px solid #1e2130; font-size: 0.84rem; }
+    .rest-detail-row:last-child { border-bottom: none; }
+    .rest-detail-label { color: #6b7280; min-width: 72px; flex-shrink: 0; font-size: 0.75rem; }
+    .rest-detail-val { color: #d1d5db; }
+    .row-g3 { display: flex; flex-wrap: wrap; gap: 16px; }
+    .col-half { flex: 1; min-width: 200px; }
+    /* Search import */
+    .import-bar { display: flex; gap: 8px; margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #2a2d3a; }
+    .import-bar input { flex: 1; background: #0f1117; border: 1px solid #374151; color: #e0e0e0; border-radius: 8px; padding: 7px 12px; font-size: 0.85rem; }
+    .import-bar input:focus { outline: none; border-color: #60a5fa; }
+    .import-bar button { background: #1d4ed8; border: none; color: white; border-radius: 8px; padding: 7px 14px; font-size: 0.82rem; cursor: pointer; white-space: nowrap; }
+    .import-bar button:hover { background: #2563eb; }
+    .import-results { background: #0f1117; border: 1px solid #2a2d3a; border-radius: 8px; margin-bottom: 14px; overflow: hidden; }
+    .import-item { display: flex; gap: 10px; align-items: center; padding: 10px 14px; border-bottom: 1px solid #1e2130; cursor: pointer; }
+    .import-item:last-child { border-bottom: none; }
+    .import-item:hover { background: #1e2130; }
+    .import-item img { width: 42px; height: 42px; border-radius: 6px; object-fit: cover; flex-shrink: 0; }
+    .import-item-name { font-size: 0.85rem; font-weight: 600; color: #f1f5f9; }
+    .import-item-sub { font-size: 0.72rem; color: #9ca3af; margin-top: 2px; }
+    .import-hint { font-size: 0.72rem; color: #6b7280; padding: 8px 14px; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark">
+  <div class="container-fluid px-4">
+    <span class="navbar-brand"><i class="bi bi-graph-up-arrow me-2"></i>股市監控</span>
+    <div class="d-flex gap-2 ms-auto align-items-center">
+      <a href="/" class="nav-link-custom">觀察清單</a>
+      <a href="/portfolio" class="nav-link-custom">持倉監控</a>
+      <a href="/food" class="nav-link-custom active"><i class="bi bi-egg-fried me-1"></i>日常飲食</a>
+      <a href="/guitar" class="nav-link-custom"><i class="bi bi-music-note-beamed me-1"></i>吉他譜</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container-fluid px-4 py-4">
+  <div class="main-tab-bar">
+    <button class="main-tab-btn active" onclick="switchMain('recipes',this)">🍳 自己煮</button>
+    <button class="main-tab-btn" onclick="switchMain('restaurants',this)">🏮 想去吃</button>
+  </div>
+
+  <!-- 自己煮 -->
+  <div id="section-recipes">
+    <div class="tool-bar">
+      <input class="search-inp" id="recipe-search" placeholder="搜尋菜名或主食材…" oninput="renderRecipes()">
+      <button class="btn-add" onclick="openRecipeEdit(null)"><i class="bi bi-plus-lg me-1"></i>新增菜譜</button>
+    </div>
+    <div class="chip-row" id="ing-chips"></div>
+    <div class="row g-3" id="recipe-grid"></div>
+  </div>
+
+  <!-- 想去吃 -->
+  <div id="section-restaurants" style="display:none">
+    <div class="tool-bar">
+      <input class="search-inp" id="rest-search" placeholder="搜尋餐廳名稱或料理類型…" oninput="renderRestaurants()">
+      <div class="d-flex gap-2">
+        <button class="pill active" onclick="setRestFilter('all',this)">全部</button>
+        <button class="pill" onclick="setRestFilter('want',this)">想去</button>
+        <button class="pill" onclick="setRestFilter('visited',this)">已去</button>
+      </div>
+      <button class="btn-add" onclick="openRestEdit(null)"><i class="bi bi-plus-lg me-1"></i>新增餐廳</button>
+    </div>
+    <div class="row g-3" id="rest-grid"></div>
+  </div>
+</div>
+
+<!-- ══════════ Recipe Modal ══════════ -->
+<div class="modal-overlay" id="recipeModal" onclick="backdropClose(event,'recipeModal')">
+  <div class="modal-box">
+    <div class="modal-box-header">
+      <div class="modal-box-title" id="recipe-modal-title">菜譜</div>
+      <div id="recipe-view-btns" style="display:flex;gap:8px">
+        <button class="btn-outline-sm" onclick="openRecipeEdit(currentRecipeId)">編輯</button>
+        <button class="btn-danger-sm" onclick="deleteRecipe()">刪除</button>
+      </div>
+      <button class="btn-close-modal" onclick="closeModal('recipeModal')">✕</button>
+    </div>
+    <div class="modal-box-body" id="recipe-modal-body"></div>
+    <div class="modal-box-footer hidden" id="recipe-edit-footer">
+      <button class="btn-outline-sm" id="recipe-cancel-btn" onclick="">取消</button>
+      <button class="btn-save" onclick="saveRecipe()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ Restaurant Modal ══════════ -->
+<div class="modal-overlay" id="restModal" onclick="backdropClose(event,'restModal')">
+  <div class="modal-box">
+    <div class="modal-box-header">
+      <div class="modal-box-title" id="rest-modal-title">餐廳</div>
+      <div id="rest-view-btns" style="display:flex;gap:8px">
+        <button class="btn-outline-sm" onclick="openRestEdit(currentRestId)">編輯</button>
+        <button class="btn-danger-sm" onclick="deleteRestaurant()">刪除</button>
+      </div>
+      <button class="btn-close-modal" onclick="closeModal('restModal')">✕</button>
+    </div>
+    <div class="modal-box-body" id="rest-modal-body"></div>
+    <div class="modal-box-footer hidden" id="rest-edit-footer">
+      <button class="btn-outline-sm" id="rest-cancel-btn" onclick="">取消</button>
+      <button class="btn-save" onclick="saveRestaurant()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var recipes = [], restaurants = [];
+var currentRecipeId = null, currentRestId = null;
+var activeIng = '', restFilter = 'all', restRating = 0;
+var activeRecipeTab = 'ingredients';
+
+// ─── Modal helpers ────────────────────────────
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+function backdropClose(e, id) {
+  if (e.target === e.currentTarget) closeModal(id);
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function switchMain(tab, el) {
+  document.querySelectorAll('.main-tab-btn').forEach(function(b){ b.classList.remove('active'); });
+  el.classList.add('active');
+  document.getElementById('section-recipes').style.display     = tab === 'recipes'     ? '' : 'none';
+  document.getElementById('section-restaurants').style.display = tab === 'restaurants' ? '' : 'none';
+}
+
+// ══════════════════════════════════════════════
+// RECIPES
+// ══════════════════════════════════════════════
+function loadRecipes() {
+  fetch('/api/recipes').then(function(r){ return r.json(); }).then(function(data){
+    recipes = data;
+    buildIngChips();
+    renderRecipes();
+  });
+}
+
+function buildIngChips() {
+  var ings = [];
+  recipes.forEach(function(r){ if (r.main_ingredient && ings.indexOf(r.main_ingredient) < 0) ings.push(r.main_ingredient); });
+  var c = document.getElementById('ing-chips');
+  if (!ings.length) { c.innerHTML = ''; return; }
+  var html = '<button class="chip ' + (activeIng === '' ? 'active' : '') + '" onclick="setIng(\'\',this)">全部</button>';
+  ings.forEach(function(i){
+    html += '<button class="chip ' + (activeIng === i ? 'active' : '') + '" onclick="setIng(\'' + esc(i) + '\',this)">' + esc(i) + '</button>';
+  });
+  c.innerHTML = html;
+}
+
+function setIng(ing, el) {
+  activeIng = ing;
+  document.querySelectorAll('#ing-chips .chip').forEach(function(c){ c.classList.remove('active'); });
+  el.classList.add('active');
+  renderRecipes();
+}
+
+function renderRecipes() {
+  var q = document.getElementById('recipe-search').value.toLowerCase();
+  var grid = document.getElementById('recipe-grid');
+  var filtered = recipes.filter(function(r){
+    var mq = !q || r.name.toLowerCase().indexOf(q) >= 0 || (r.main_ingredient || '').toLowerCase().indexOf(q) >= 0;
+    var mi = !activeIng || r.main_ingredient === activeIng;
+    return mq && mi;
+  });
+  if (!filtered.length) {
+    grid.innerHTML = '<div class="col-12 empty-ph"><i class="bi bi-journal-x" style="font-size:3rem;display:block;margin-bottom:12px"></i>' + (recipes.length ? '沒有符合的菜譜' : '尚無菜譜，點「新增菜譜」開始記錄') + '</div>';
+    return;
+  }
+  var html = '';
+  filtered.forEach(function(r){
+    var thumb = r.photos && r.photos.length ? '/food/photos/' + esc(r.photos[0]) : null;
+    html += '<div class="col-xl-3 col-lg-4 col-md-6"><div class="recipe-card" onclick="openRecipeView(\'' + r.id + '\')">';
+    html += '<div class="recipe-img-wrap">';
+    html += thumb ? '<img src="' + thumb + '" loading="lazy" alt="">' : '<i class="bi bi-egg-fried recipe-img-ph"></i>';
+    html += '</div><div class="recipe-body">';
+    html += '<div class="recipe-name">' + esc(r.name) + '</div>';
+    html += '<div class="recipe-sub">' + r.ingredients.length + ' 種食材・' + r.steps.length + ' 個步驟</div><div>';
+    if (r.main_ingredient) html += '<span class="rtag rtag-ing">' + esc(r.main_ingredient) + '</span>';
+    if (r.category) html += '<span class="rtag rtag-cat">' + esc(r.category) + '</span>';
+    html += '</div></div></div></div>';
+  });
+  grid.innerHTML = html;
+}
+
+// ─── View recipe ───────────────────────────────
+function openRecipeView(id) {
+  currentRecipeId = id;
+  var r = null;
+  for (var i = 0; i < recipes.length; i++) { if (recipes[i].id === id) { r = recipes[i]; break; } }
+  if (!r) return;
+  document.getElementById('recipe-modal-title').textContent = r.name;
+  document.getElementById('recipe-view-btns').style.display = 'flex';
+  document.getElementById('recipe-edit-footer').className = 'modal-box-footer hidden';
+  activeRecipeTab = 'ingredients';
+  document.getElementById('recipe-modal-body').innerHTML = buildRecipeViewHtml(r);
+  openModal('recipeModal');
+}
+
+function tabLabel(t) {
+  var map = {ingredients:'食材', steps:'作法', notes:'備註', links:'參考連結'};
+  return map[t] || t;
+}
+
+function buildRecipeViewHtml(r) {
+  var h = '';
+  if (r.photos && r.photos.length) {
+    h += '<img class="photo-main" id="recipe-big-photo" src="/food/photos/' + esc(r.photos[0]) + '" alt="">';
+    if (r.photos.length > 1) {
+      h += '<div class="photo-strip">';
+      r.photos.forEach(function(p, i){
+        h += '<img class="photo-thumb' + (i === 0 ? ' active' : '') + '" src="/food/photos/' + esc(p) + '" onclick="setMainPhoto(\'/food/photos/' + esc(p) + '\',this)">';
+      });
+      h += '</div>';
+    }
+  }
+  var tabs = ['ingredients','steps','notes','links'];
+  h += '<div class="vtab-bar">';
+  tabs.forEach(function(t){
+    h += '<button class="vtab-btn' + (t === activeRecipeTab ? ' active' : '') + '" onclick="switchRecipeTab(\'' + t + '\',this)">' + tabLabel(t) + '</button>';
+  });
+  h += '</div>';
+  h += '<div id="recipe-tab-content">' + recipeTabContent(r, activeRecipeTab) + '</div>';
+  return h;
+}
+
+function recipeTabContent(r, tab) {
+  if (tab === 'ingredients') {
+    if (!r.ingredients.length) return '<div style="color:#6b7280;font-size:.83rem">尚無食材</div>';
+    return r.ingredients.map(function(i){ return '<div class="ing-item"><input type="checkbox" class="ing-check"><span>' + esc(i) + '</span></div>'; }).join('');
+  }
+  if (tab === 'steps') {
+    if (!r.steps.length) return '<div style="color:#6b7280;font-size:.83rem">尚無步驟</div>';
+    return r.steps.map(function(s, i){ return '<div class="step-row"><div class="step-num">' + (i+1) + '</div><div class="step-txt">' + esc(s) + '</div></div>'; }).join('');
+  }
+  if (tab === 'notes') {
+    return r.notes ? '<div class="notes-display">' + esc(r.notes) + '</div>' : '<div style="color:#6b7280;font-size:.83rem">尚無備註</div>';
+  }
+  if (tab === 'links') {
+    if (!r.social_links.length) return '<div style="color:#6b7280;font-size:.83rem">尚無連結</div>';
+    return r.social_links.map(function(l){ return '<div class="link-item"><i class="bi bi-link-45deg" style="color:#6b7280"></i><a href="' + esc(l.url) + '" target="_blank" rel="noopener">' + esc(l.label || l.url) + '</a></div>'; }).join('');
+  }
+  return '';
+}
+
+function switchRecipeTab(tab, el) {
+  activeRecipeTab = tab;
+  document.querySelectorAll('#recipeModal .vtab-btn').forEach(function(b){ b.classList.remove('active'); });
+  el.classList.add('active');
+  var r = null;
+  for (var i = 0; i < recipes.length; i++) { if (recipes[i].id === currentRecipeId) { r = recipes[i]; break; } }
+  if (r) document.getElementById('recipe-tab-content').innerHTML = recipeTabContent(r, tab);
+}
+
+function setMainPhoto(src, el) {
+  document.getElementById('recipe-big-photo').src = src;
+  document.querySelectorAll('.photo-thumb').forEach(function(t){ t.classList.remove('active'); });
+  el.classList.add('active');
+}
+
+// ─── Edit / Add recipe ─────────────────────────
+function openRecipeEdit(id) {
+  currentRecipeId = id;
+  var r = null;
+  if (id) { for (var i = 0; i < recipes.length; i++) { if (recipes[i].id === id) { r = recipes[i]; break; } } }
+  document.getElementById('recipe-modal-title').textContent = id ? '編輯菜譜' : '新增菜譜';
+  document.getElementById('recipe-view-btns').style.display = 'none';
+  document.getElementById('recipe-edit-footer').className = 'modal-box-footer';
+  var cancelBtn = document.getElementById('recipe-cancel-btn');
+  cancelBtn.onclick = id ? function(){ openRecipeView(id); } : function(){ closeModal('recipeModal'); };
+  document.getElementById('recipe-modal-body').innerHTML = buildRecipeEditHtml(r);
+  openModal('recipeModal');
+}
+
+function buildRecipeEditHtml(r) {
+  var ings   = r ? r.ingredients  : [];
+  var steps  = r ? r.steps        : [];
+  var links  = r ? r.social_links : [];
+
+  var h = '<div class="import-bar"><input id="recipe-q" placeholder="搜尋食譜帶入（英文關鍵字，如 chicken curry）…" onkeydown="if(event.key===\'Enter\')searchRecipe()"><button onclick="searchRecipe()"><i class="bi bi-search me-1"></i>搜尋帶入</button></div><div id="recipe-import-results"></div>';
+  h += '<div class="row-g3 mb-3">';
+  h += '<div class="col-half"><label class="form-label">菜名 *</label><input class="form-control" id="e-name" value="' + esc(r ? r.name : '') + '"></div>';
+  h += '<div class="col-half"><label class="form-label">主食材</label><input class="form-control" id="e-main" value="' + esc(r ? r.main_ingredient : '') + '" placeholder="雞肉、番茄…"></div>';
+  h += '<div class="col-half"><label class="form-label">分類</label><input class="form-control" id="e-cat" value="' + esc(r ? r.category : '') + '" placeholder="家常菜、湯品…"></div>';
+  h += '</div>';
+
+  if (r) {
+    h += '<div class="sec-title">照片</div><div class="photo-strip" id="e-photos">';
+    r.photos.forEach(function(p){
+      h += '<div class="photo-rel"><img class="photo-thumb" src="/food/photos/' + esc(p) + '"><button class="photo-del" onclick="delRecipePhoto(\'' + esc(r.id) + '\',\'' + esc(p) + '\')">×</button></div>';
+    });
+    h += '<label class="upload-thumb"><i class="bi bi-plus" style="font-size:1.2rem"></i><span>上傳</span><input type="file" accept="image/*" multiple style="display:none" onchange="uploadPhotos(\'' + r.id + '\',this)"></label>';
+    h += '</div>';
+  } else {
+    h += '<div style="font-size:.72rem;color:#6b7280;margin-bottom:12px">儲存後可新增照片</div>';
+  }
+
+  h += '<div class="sec-title">食材</div><div id="e-ings">';
+  ings.forEach(function(ing){
+    h += '<div class="edit-row"><input value="' + esc(ing) + '" placeholder="番茄 2顆"><button class="btn-del-row" onclick="this.closest(\'.edit-row\').remove()"><i class="bi bi-x-lg"></i></button></div>';
+  });
+  h += '</div><button class="btn-add-row" onclick="addIngRow()"><i class="bi bi-plus me-1"></i>新增食材</button>';
+
+  h += '<div class="sec-title">作法</div><div id="e-steps">';
+  steps.forEach(function(s, i){
+    h += '<div class="edit-row top"><div class="step-num" style="margin-top:6px;flex-shrink:0">' + (i+1) + '</div><textarea rows="2">' + esc(s) + '</textarea><button class="btn-del-row" onclick="remStep(this)"><i class="bi bi-x-lg"></i></button></div>';
+  });
+  h += '</div><button class="btn-add-row" onclick="addStepRow()"><i class="bi bi-plus me-1"></i>新增步驟</button>';
+
+  h += '<div class="sec-title">備註</div><textarea class="form-control" id="e-notes" rows="3" placeholder="調味小技巧…">' + esc(r ? r.notes : '') + '</textarea>';
+
+  h += '<div class="sec-title">參考連結</div><div id="e-links">';
+  links.forEach(function(l){
+    h += '<div class="link-row"><input class="lbl-inp" value="' + esc(l.label || '') + '" placeholder="標籤（YouTube…）"><input value="' + esc(l.url || '') + '" placeholder="https://…"><button class="btn-del-row" onclick="this.closest(\'.link-row\').remove()"><i class="bi bi-x-lg"></i></button></div>';
+  });
+  h += '</div><button class="btn-add-row" onclick="addLinkRow(\'e-links\')"><i class="bi bi-plus me-1"></i>新增連結</button>';
+
+  return h;
+}
+
+function addIngRow() {
+  var d = document.createElement('div'); d.className = 'edit-row';
+  d.innerHTML = '<input placeholder="食材 份量"><button class="btn-del-row" onclick="this.closest(\'.edit-row\').remove()"><i class="bi bi-x-lg"></i></button>';
+  document.getElementById('e-ings').appendChild(d);
+}
+function addStepRow() {
+  var c = document.getElementById('e-steps'), n = c.children.length + 1;
+  var d = document.createElement('div'); d.className = 'edit-row top';
+  d.innerHTML = '<div class="step-num" style="margin-top:6px;flex-shrink:0">' + n + '</div><textarea rows="2" placeholder="步驟說明"></textarea><button class="btn-del-row" onclick="remStep(this)"><i class="bi bi-x-lg"></i></button>';
+  c.appendChild(d);
+}
+function remStep(btn) {
+  btn.closest('.edit-row').remove();
+  document.querySelectorAll('#e-steps .step-num').forEach(function(el, i){ el.textContent = i + 1; });
+}
+function addLinkRow(containerId) {
+  var d = document.createElement('div'); d.className = 'link-row';
+  d.innerHTML = '<input class="lbl-inp" placeholder="標籤"><input placeholder="https://…"><button class="btn-del-row" onclick="this.closest(\'.link-row\').remove()"><i class="bi bi-x-lg"></i></button>';
+  document.getElementById(containerId).appendChild(d);
+}
+
+function saveRecipe() {
+  var name = document.getElementById('e-name').value.trim();
+  if (!name) { alert('請填寫菜名'); return; }
+  var ings   = Array.from(document.querySelectorAll('#e-ings input')).map(function(i){ return i.value.trim(); }).filter(Boolean);
+  var steps  = Array.from(document.querySelectorAll('#e-steps textarea')).map(function(t){ return t.value.trim(); }).filter(Boolean);
+  var lrows  = document.querySelectorAll('#e-links .link-row');
+  var links  = Array.from(lrows).map(function(row){
+    var inputs = row.querySelectorAll('input');
+    return {label: inputs[0].value.trim(), url: inputs[1].value.trim()};
+  }).filter(function(l){ return l.url; });
+  var notesEl = document.getElementById('e-notes');
+  var payload = {
+    name: name,
+    main_ingredient: document.getElementById('e-main').value.trim(),
+    category: document.getElementById('e-cat').value.trim(),
+    notes: notesEl ? notesEl.value.trim() : '',
+    ingredients: ings, steps: steps, social_links: links
+  };
+  var url    = currentRecipeId ? '/api/recipes/' + currentRecipeId : '/api/recipes';
+  var method = currentRecipeId ? 'PUT' : 'POST';
+  fetch(url, {method: method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)})
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if (data.error) { alert(data.error); return; }
+      if (!currentRecipeId && data.id) currentRecipeId = data.id;
+      loadRecipesAndView(currentRecipeId);
+    });
+}
+
+function loadRecipesAndView(id) {
+  fetch('/api/recipes').then(function(r){ return r.json(); }).then(function(data){
+    recipes = data;
+    buildIngChips();
+    renderRecipes();
+    openRecipeView(id);
+  });
+}
+
+function deleteRecipe() {
+  var r = null;
+  for (var i = 0; i < recipes.length; i++) { if (recipes[i].id === currentRecipeId) { r = recipes[i]; break; } }
+  if (!confirm('確定刪除「' + (r ? r.name : '') + '」？')) return;
+  fetch('/api/recipes/' + currentRecipeId, {method: 'DELETE'}).then(function(){
+    closeModal('recipeModal');
+    loadRecipes();
+  });
+}
+
+function uploadPhotos(recipeId, input) {
+  var fd = new FormData();
+  for (var i = 0; i < input.files.length; i++) fd.append('photos', input.files[i]);
+  fetch('/api/recipes/' + recipeId + '/photos', {method: 'POST', body: fd})
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if (data.error) { alert(data.error); return; }
+      fetch('/api/recipes').then(function(r){ return r.json(); }).then(function(d){
+        recipes = d; buildIngChips(); renderRecipes(); openRecipeEdit(recipeId);
+      });
+    });
+}
+
+function delRecipePhoto(recipeId, filename) {
+  if (!confirm('確定刪除這張照片？')) return;
+  fetch('/api/recipes/' + recipeId + '/photos/' + filename, {method: 'DELETE'}).then(function(){
+    fetch('/api/recipes').then(function(r){ return r.json(); }).then(function(d){
+      recipes = d; buildIngChips(); renderRecipes(); openRecipeEdit(recipeId);
+    });
+  });
+}
+
+// ══════════════════════════════════════════════
+// RESTAURANTS
+// ══════════════════════════════════════════════
+function loadRestaurants() {
+  fetch('/api/restaurants').then(function(r){ return r.json(); }).then(function(data){
+    restaurants = data;
+    renderRestaurants();
+  });
+}
+
+function setRestFilter(f, el) {
+  restFilter = f;
+  document.querySelectorAll('.pill').forEach(function(p){ p.classList.remove('active'); });
+  el.classList.add('active');
+  renderRestaurants();
+}
+
+function stars(n) {
+  var h = '';
+  for (var i = 1; i <= 5; i++) h += '<i class="bi bi-star' + (i <= n ? '-fill' : '') + '" style="color:' + (i <= n ? '#fbbf24' : '#374151') + '"></i>';
+  return h;
+}
+
+function renderRestaurants() {
+  var q = document.getElementById('rest-search').value.toLowerCase();
+  var grid = document.getElementById('rest-grid');
+  var filtered = restaurants.filter(function(r){
+    var mq = !q || r.name.toLowerCase().indexOf(q) >= 0 || (r.cuisine || '').toLowerCase().indexOf(q) >= 0;
+    var mv = restFilter === 'all' || (restFilter === 'visited' ? r.visited : !r.visited);
+    return mq && mv;
+  });
+  if (!filtered.length) {
+    grid.innerHTML = '<div class="col-12 empty-ph"><i class="bi bi-shop" style="font-size:3rem;display:block;margin-bottom:12px"></i>' + (restaurants.length ? '沒有符合的餐廳' : '尚無餐廳，點「新增餐廳」開始收藏') + '</div>';
+    return;
+  }
+  var html = '';
+  filtered.forEach(function(r){
+    html += '<div class="col-xl-3 col-lg-4 col-md-6"><div class="rest-card" onclick="openRestView(\'' + r.id + '\')">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start">';
+    html += '<div><div class="rest-name">' + esc(r.name) + '</div><div class="rest-cuisine">' + esc(r.cuisine || '') + '</div></div>';
+    html += r.visited ? '<span class="badge-visited">✓ 已去</span>' : '<span class="badge-want">♡ 想去</span>';
+    html += '</div>';
+    html += '<div class="rest-stars" style="margin:8px 0 4px">' + stars(r.rating || 0) + '</div>';
+    if (r.hours) html += '<div class="rest-info-row"><i class="bi bi-clock rest-info-icon"></i><span>' + esc(r.hours) + '</span></div>';
+    if (r.reservation) html += '<div class="rest-info-row"><i class="bi bi-telephone rest-info-icon"></i><span>' + esc(r.reservation) + '</span></div>';
+    if (r.map_url) html += '<div style="margin-top:8px"><a href="' + esc(r.map_url) + '" target="_blank" rel="noopener" class="btn-map-link" onclick="event.stopPropagation()"><i class="bi bi-geo-alt-fill"></i> Google Maps</a></div>';
+    html += '</div></div>';
+  });
+  grid.innerHTML = html;
+}
+
+// ─── View restaurant ────────────────────────────
+function openRestView(id) {
+  currentRestId = id;
+  var r = null;
+  for (var i = 0; i < restaurants.length; i++) { if (restaurants[i].id === id) { r = restaurants[i]; break; } }
+  if (!r) return;
+  document.getElementById('rest-modal-title').textContent = r.name;
+  document.getElementById('rest-view-btns').style.display = 'flex';
+  document.getElementById('rest-edit-footer').className = 'modal-box-footer hidden';
+  document.getElementById('rest-modal-body').innerHTML = buildRestViewHtml(r);
+  openModal('restModal');
+}
+
+function buildRestViewHtml(r) {
+  var h = '<div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:16px">';
+  h += '<div><div style="font-size:1rem;font-weight:700;color:#f1f5f9">' + esc(r.name) + '</div>';
+  h += '<div style="font-size:.78rem;color:#9ca3af">' + esc(r.cuisine || '') + '</div></div>';
+  h += '<div style="margin-left:auto;text-align:right"><div class="rest-stars">' + stars(r.rating || 0) + '</div>';
+  h += r.visited ? '<span class="badge-visited">✓ 已去</span>' : '<span class="badge-want">♡ 想去</span>';
+  h += '</div></div>';
+  if (r.map_url) h += '<div style="margin-bottom:12px"><a href="' + esc(r.map_url) + '" target="_blank" rel="noopener" class="btn-map-link"><i class="bi bi-geo-alt-fill"></i> 開啟 Google Maps</a></div>';
+  var rows = [
+    ['bi-clock','營業時間', r.hours],
+    ['bi-telephone','訂位方式', r.reservation],
+    ['bi-credit-card','結帳方式', r.payment],
+    ['bi-p-circle','停車', r.parking]
+  ];
+  rows.forEach(function(row){
+    if (row[2]) h += '<div class="rest-detail-row"><span class="rest-detail-label"><i class="bi ' + row[0] + '" style="margin-right:4px"></i>' + row[1] + '</span><span class="rest-detail-val">' + esc(row[2]) + '</span></div>';
+  });
+  if (r.my_notes) h += '<div class="sec-title">我的筆記</div><div class="notes-display">' + esc(r.my_notes) + '</div>';
+  if (r.review_links && r.review_links.length) {
+    h += '<div class="sec-title">評論 / 網紅推薦</div>';
+    r.review_links.forEach(function(l){ h += '<div class="link-item"><i class="bi bi-link-45deg" style="color:#6b7280"></i><a href="' + esc(l.url) + '" target="_blank" rel="noopener">' + esc(l.label || l.url) + '</a></div>'; });
+  }
+  return h;
+}
+
+// ─── Edit / Add restaurant ──────────────────────
+function openRestEdit(id) {
+  currentRestId = id;
+  var r = null;
+  if (id) { for (var i = 0; i < restaurants.length; i++) { if (restaurants[i].id === id) { r = restaurants[i]; break; } } }
+  restRating = r ? (r.rating || 0) : 0;
+  document.getElementById('rest-modal-title').textContent = id ? '編輯餐廳' : '新增餐廳';
+  document.getElementById('rest-view-btns').style.display = 'none';
+  document.getElementById('rest-edit-footer').className = 'modal-box-footer';
+  var cancelBtn = document.getElementById('rest-cancel-btn');
+  cancelBtn.onclick = id ? function(){ openRestView(id); } : function(){ closeModal('restModal'); };
+  document.getElementById('rest-modal-body').innerHTML = buildRestEditHtml(r);
+  openModal('restModal');
+}
+
+function buildRestEditHtml(r) {
+  var links = r ? (r.review_links || []) : [];
+  var h = '<div class="import-bar"><input id="rest-q" placeholder="搜尋餐廳名稱帶入（如：鼎泰豐 台北）…" onkeydown="if(event.key===\'Enter\')searchRest()"><button onclick="searchRest()"><i class="bi bi-search me-1"></i>搜尋帶入</button></div><div id="rest-import-results"></div>';
+  h += '<div class="row-g3 mb-3">';
+  h += '<div class="col-half"><label class="form-label">餐廳名稱 *</label><input class="form-control" id="r-name" value="' + esc(r ? r.name : '') + '"></div>';
+  h += '<div class="col-half"><label class="form-label">料理類型</label><input class="form-control" id="r-cuisine" value="' + esc(r ? r.cuisine : '') + '" placeholder="日式、台灣料理…"></div>';
+  h += '</div><div class="row-g3 mb-3">';
+  h += '<div class="col-half"><label class="form-label">營業時間</label><input class="form-control" id="r-hours" value="' + esc(r ? r.hours : '') + '" placeholder="11:00-21:00，週一公休"></div>';
+  h += '<div class="col-half"><label class="form-label">訂位方式</label><input class="form-control" id="r-res" value="' + esc(r ? r.reservation : '') + '" placeholder="電話 / inline"></div>';
+  h += '</div><div class="row-g3 mb-3">';
+  h += '<div class="col-half"><label class="form-label">結帳方式</label><input class="form-control" id="r-pay" value="' + esc(r ? r.payment : '') + '" placeholder="現金、信用卡…"></div>';
+  h += '<div class="col-half"><label class="form-label">停車</label><input class="form-control" id="r-park" value="' + esc(r ? r.parking : '') + '" placeholder="附近有停車場"></div>';
+  h += '</div>';
+  h += '<div class="mb-3"><label class="form-label">Google Maps 連結</label><input class="form-control" id="r-map" value="' + esc(r ? r.map_url : '') + '" placeholder="https://maps.google.com/…"></div>';
+  h += '<div class="mb-3"><label class="form-label">評分</label><div class="star-picker" id="star-picker">';
+  for (var i = 1; i <= 5; i++) {
+    h += '<i class="bi bi-star' + (i <= restRating ? '-fill' : '') + '" style="color:' + (i <= restRating ? '#fbbf24' : '#374151') + '" onclick="setRating(' + i + ')"></i>';
+  }
+  h += '</div></div>';
+  h += '<div class="mb-3" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="r-visited" ' + (r && r.visited ? 'checked' : '') + '><label for="r-visited" class="form-check-label">已造訪</label></div>';
+  h += '<div class="mb-3"><label class="form-label">我的筆記</label><textarea class="form-control" id="r-notes" rows="3" placeholder="推薦菜色、感受…">' + esc(r ? r.my_notes : '') + '</textarea></div>';
+  h += '<div class="sec-title">評論 / 網紅推薦連結</div><div id="r-links">';
+  links.forEach(function(l){
+    h += '<div class="link-row"><input class="lbl-inp" value="' + esc(l.label || '') + '" placeholder="標籤"><input value="' + esc(l.url || '') + '" placeholder="https://…"><button class="btn-del-row" onclick="this.closest(\'.link-row\').remove()"><i class="bi bi-x-lg"></i></button></div>';
+  });
+  h += '</div><button class="btn-add-row" onclick="addLinkRow(\'r-links\')"><i class="bi bi-plus me-1"></i>新增連結</button>';
+  return h;
+}
+
+function setRating(n) {
+  restRating = n;
+  var els = document.querySelectorAll('#star-picker i');
+  els.forEach(function(el, i){
+    el.className = 'bi bi-star' + (i < n ? '-fill' : '');
+    el.style.color = i < n ? '#fbbf24' : '#374151';
+  });
+}
+
+function saveRestaurant() {
+  var name = document.getElementById('r-name').value.trim();
+  if (!name) { alert('請填寫餐廳名稱'); return; }
+  var lrows = document.querySelectorAll('#r-links .link-row');
+  var review_links = Array.from(lrows).map(function(row){
+    var inputs = row.querySelectorAll('input');
+    return {label: inputs[0].value.trim(), url: inputs[1].value.trim()};
+  }).filter(function(l){ return l.url; });
+  var notesEl = document.getElementById('r-notes');
+  var payload = {
+    name: name,
+    cuisine:     document.getElementById('r-cuisine').value.trim(),
+    hours:       document.getElementById('r-hours').value.trim(),
+    reservation: document.getElementById('r-res').value.trim(),
+    payment:     document.getElementById('r-pay').value.trim(),
+    parking:     document.getElementById('r-park').value.trim(),
+    map_url:     document.getElementById('r-map').value.trim(),
+    my_notes:    notesEl ? notesEl.value.trim() : '',
+    rating:      restRating,
+    visited:     document.getElementById('r-visited').checked,
+    review_links: review_links
+  };
+  var url    = currentRestId ? '/api/restaurants/' + currentRestId : '/api/restaurants';
+  var method = currentRestId ? 'PUT' : 'POST';
+  fetch(url, {method: method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)})
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if (data.error) { alert(data.error); return; }
+      if (!currentRestId && data.id) currentRestId = data.id;
+      fetch('/api/restaurants').then(function(r){ return r.json(); }).then(function(d){
+        restaurants = d;
+        renderRestaurants();
+        openRestView(currentRestId);
+      });
+    });
+}
+
+function deleteRestaurant() {
+  var r = null;
+  for (var i = 0; i < restaurants.length; i++) { if (restaurants[i].id === currentRestId) { r = restaurants[i]; break; } }
+  if (!confirm('確定刪除「' + (r ? r.name : '') + '」？')) return;
+  fetch('/api/restaurants/' + currentRestId, {method: 'DELETE'}).then(function(){
+    closeModal('restModal');
+    loadRestaurants();
+  });
+}
+
+// ══════════════════════════════════════════════
+// SEARCH IMPORT
+// ══════════════════════════════════════════════
+var _recipeImport = [];
+var _restImport   = [];
+
+function searchRecipe() {
+  var q = document.getElementById('recipe-q').value.trim();
+  if (!q) return;
+  var box = document.getElementById('recipe-import-results');
+  box.innerHTML = '<div class="import-hint">搜尋中…</div>';
+  fetch('/api/search/recipe?q=' + encodeURIComponent(q))
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      _recipeImport = data;
+      if (!data.length) {
+        box.innerHTML = '<div class="import-hint">找不到相符的食譜，請直接填寫或換關鍵字</div>';
+        return;
+      }
+      var html = '<div class="import-results">';
+      data.forEach(function(item, i){
+        html += '<div class="import-item" onclick="fillRecipe(' + i + ')">';
+        if (item.photo_url) html += '<img src="' + esc(item.photo_url) + '" loading="lazy">';
+        html += '<div><div class="import-item-name">' + esc(item.name) + '</div>';
+        html += '<div class="import-item-sub">' + esc(item.category) + '・' + item.ingredients.length + ' 種食材・' + item.steps.length + ' 步驟</div></div></div>';
+      });
+      html += '</div>';
+      box.innerHTML = html;
+    });
+}
+
+function fillRecipe(i) {
+  var r = _recipeImport[i];
+  document.getElementById('e-name').value  = r.name;
+  document.getElementById('e-main').value  = r.main_ingredient;
+  document.getElementById('e-cat').value   = r.category;
+  // ingredients
+  var ic = document.getElementById('e-ings'); ic.innerHTML = '';
+  r.ingredients.forEach(function(ing){
+    var d = document.createElement('div'); d.className = 'edit-row';
+    d.innerHTML = '<input value="' + esc(ing) + '" placeholder="食材 份量"><button class="btn-del-row" onclick="this.closest(\'.edit-row\').remove()"><i class="bi bi-x-lg"></i></button>';
+    ic.appendChild(d);
+  });
+  // steps
+  var sc = document.getElementById('e-steps'); sc.innerHTML = '';
+  r.steps.forEach(function(s, idx){
+    var d = document.createElement('div'); d.className = 'edit-row top';
+    d.innerHTML = '<div class="step-num" style="margin-top:6px;flex-shrink:0">' + (idx+1) + '</div><textarea rows="2">' + esc(s) + '</textarea><button class="btn-del-row" onclick="remStep(this)"><i class="bi bi-x-lg"></i></button>';
+    sc.appendChild(d);
+  });
+  // links
+  var lc = document.getElementById('e-links'); lc.innerHTML = '';
+  r.social_links.forEach(function(l){
+    var d = document.createElement('div'); d.className = 'link-row';
+    d.innerHTML = '<input class="lbl-inp" value="' + esc(l.label) + '" placeholder="標籤"><input value="' + esc(l.url) + '" placeholder="https://…"><button class="btn-del-row" onclick="this.closest(\'.link-row\').remove()"><i class="bi bi-x-lg"></i></button>';
+    lc.appendChild(d);
+  });
+  document.getElementById('recipe-import-results').innerHTML = '<div class="import-hint" style="color:#34d399">✓ 已帶入「' + esc(r.name) + '」，請確認並修改後儲存</div>';
+}
+
+function searchRest() {
+  var q = document.getElementById('rest-q').value.trim();
+  if (!q) return;
+  var box = document.getElementById('rest-import-results');
+  box.innerHTML = '<div class="import-hint">搜尋中…</div>';
+  fetch('/api/search/restaurant?q=' + encodeURIComponent(q))
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      _restImport = data;
+      if (!data.length) {
+        box.innerHTML = '<div class="import-hint">找不到，請直接填寫</div>';
+        return;
+      }
+      var html = '<div class="import-results">';
+      data.forEach(function(item, i){
+        html += '<div class="import-item" onclick="fillRest(' + i + ')">';
+        html += '<i class="bi bi-shop" style="font-size:1.4rem;color:#6b7280;flex-shrink:0"></i>';
+        html += '<div><div class="import-item-name">' + esc(item.name) + '</div>';
+        if (item.my_notes) html += '<div class="import-item-sub">' + esc(item.my_notes) + '</div>';
+        if (item.map_url) html += '<div class="import-item-sub" style="color:#60a5fa">有地圖連結</div>';
+        html += '</div></div>';
+      });
+      html += '</div>';
+      box.innerHTML = html;
+    });
+}
+
+function fillRest(i) {
+  var r = _restImport[i];
+  document.getElementById('r-name').value    = r.name;
+  document.getElementById('r-cuisine').value = r.cuisine || '';
+  document.getElementById('r-hours').value   = r.hours   || '';
+  document.getElementById('r-res').value     = r.reservation || '';
+  document.getElementById('r-pay').value     = r.payment || '';
+  document.getElementById('r-park').value    = r.parking || '';
+  document.getElementById('r-map').value     = r.map_url || '';
+  var notesEl = document.getElementById('r-notes');
+  if (notesEl && r.my_notes) notesEl.value = r.my_notes;
+  document.getElementById('rest-import-results').innerHTML = '<div class="import-hint" style="color:#34d399">✓ 已帶入「' + esc(r.name) + '」，請補充詳細資訊後儲存</div>';
+}
+
+// ── Init ──────────────────────────────────────
+loadRecipes();
+loadRestaurants();
+</script>
+</body>
+</html>

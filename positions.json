@@ -1,0 +1,16 @@
+[
+  {
+    "ticker": "2464",
+    "name": "盟立",
+    "market": "TW",
+    "cost": 69.99,
+    "shares": 10000
+  },
+  {
+    "ticker": "4566",
+    "name": "時碩工業",
+    "market": "TW",
+    "cost": 66.5,
+    "shares": 10000
+  }
+]
