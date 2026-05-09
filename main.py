@@ -322,18 +322,22 @@ def api_watchlist_add():
     ticker = data.get("ticker", "").strip().upper()
     name = data.get("name", "").strip()
     market = data.get("market", "TW")
+    featured = data.get("featured", False)
 
     if not ticker or not name:
         return jsonify({"error": "ticker 和 name 不能空白"}), 400
 
     watchlist = load_watchlist()
-    if any(c["ticker"] == ticker for c in watchlist):
-        return jsonify({"error": f"{ticker} 已在監控清單中"}), 400
+    existing = next((c for c in watchlist if c["ticker"] == ticker), None)
+    if existing:
+        existing["featured"] = featured
+        existing["name"] = name
+        save_watchlist(watchlist)
+        return jsonify({"success": True})
 
-    watchlist.append({"ticker": ticker, "name": name, "market": market})
+    watchlist.append({"ticker": ticker, "name": name, "market": market, "featured": featured})
     save_watchlist(watchlist)
 
-    # Fetch data for the new company immediately in background
     def refresh_one():
         global cache_data
         entry = {
@@ -489,6 +493,22 @@ def tabs_view(tab_id):
 @app.route("/tabs/<tab_id>/files/<path:filename>")
 def tabs_serve_file(tab_id, filename):
     return send_from_directory(TABS_DIR, filename)
+
+
+@app.route("/portfolio")
+def portfolio():
+    return render_template("portfolio.html")
+
+
+@app.route("/api/portfolio/prices")
+def api_portfolio_prices():
+    tickers = [("2464", "TW"), ("4566", "TW")]
+    result = {}
+    for ticker, market in tickers:
+        data = get_stock_data(ticker, market)
+        if data:
+            result[ticker] = data
+    return jsonify(result)
 
 
 # ── Entry point ────────────────────────────────────────────────────────────────

@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>持倉監控 — 股市 Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    body { background: #0f1117; color: #e0e0e0; font-family: 'Segoe UI', system-ui, sans-serif; }
+    .navbar { background: #1a1d27 !important; border-bottom: 1px solid #2a2d3a; }
+    .navbar-brand { font-weight: 700; font-size: 1.3rem; color: #60a5fa !important; }
+    .nav-link-custom { color: #9ca3af; text-decoration: none; padding: 6px 14px; border-radius: 8px; font-size: 0.9rem; transition: all .15s; }
+    .nav-link-custom:hover { background: #2a2d3a; color: #a78bfa; }
+    .nav-link-custom.active { background: #2a2d3a; color: #60a5fa; }
+    .card { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 12px; }
+    .card-header { background: #1e2130; border-bottom: 1px solid #2a2d3a; border-radius: 12px 12px 0 0 !important; font-size: 0.82rem; text-transform: uppercase; letter-spacing: .08em; color: #6b7280; }
+
+    /* 持倉卡片 */
+    .position-card { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 12px; padding: 16px; cursor: pointer; transition: border-color .15s; }
+    .position-card.selected { border-color: #60a5fa; }
+    .position-card:hover { border-color: #374151; }
+    .p-name { font-size: 1rem; font-weight: 700; color: #f1f5f9; }
+    .p-ticker { font-size: 0.75rem; color: #6b7280; margin-top: 1px; }
+    .p-price { font-size: 1.5rem; font-weight: 700; margin: 6px 0 2px; }
+    .p-change { font-size: 0.82rem; font-weight: 600; }
+    .p-pnl { font-size: 0.78rem; color: #9ca3af; margin-top: 6px; }
+    .pnl-val { font-weight: 600; }
+    .up { color: #34d399; } .down { color: #f87171; } .flat { color: #9ca3af; } .warn { color: #fbbf24; }
+
+    /* Tab 列 */
+    .tab-bar { display: flex; gap: 4px; border-bottom: 1px solid #2a2d3a; margin-bottom: 20px; }
+    .tab-btn { padding: 8px 16px; font-size: 0.82rem; font-weight: 500; color: #9ca3af; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; transition: color .15s; }
+    .tab-btn.active { color: #60a5fa; border-bottom-color: #60a5fa; }
+
+    /* 指標格線 */
+    .ind-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+    .ind-card { background: #0f1117; border-radius: 8px; padding: 10px 12px; }
+    .ind-label { font-size: 0.7rem; color: #6b7280; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 3px; }
+    .ind-val { font-size: 0.95rem; font-weight: 600; }
+    .ind-hint { font-size: 0.7rem; margin-top: 2px; color: #6b7280; }
+
+    /* 法人格線 */
+    .inst-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+    .inst-card { background: #0f1117; border-radius: 8px; padding: 10px 12px; }
+    .inst-name { font-size: 0.7rem; color: #6b7280; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+    .inst-val { font-size: 0.95rem; font-weight: 600; }
+    .inst-note { font-size: 0.7rem; color: #6b7280; margin-top: 2px; }
+
+    /* 訊號 */
+    .sig-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
+    .sig-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+    .dot-g { background: #34d399; } .dot-r { background: #f87171; } .dot-a { background: #fbbf24; }
+    .sig-txt { font-size: 0.82rem; color: #d1d5db; line-height: 1.5; }
+
+    /* 股癌評估框 */
+    .verdict-box { background: #0f1117; border-radius: 10px; padding: 14px 16px; margin-bottom: 20px; border: 1px solid #2a2d3a; }
+    .verdict-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: .08em; color: #6b7280; margin-bottom: 8px; }
+    .verdict-text { font-size: 0.85rem; line-height: 1.7; color: #d1d5db; }
+
+    /* AI 按鈕 */
+    .ai-btn { width: 100%; padding: 9px; font-size: 0.88rem; font-weight: 500; border-radius: 8px; border: 1px solid #374151; background: #1a1d27; color: #e0e0e0; cursor: pointer; margin-bottom: 10px; }
+    .ai-btn:hover { background: #2a2d3a; }
+
+    /* 新聞 */
+    .news-item { padding: 10px 0; border-bottom: 1px solid #2a2d3a; }
+    .news-item:last-child { border-bottom: none; }
+    .news-title { font-size: 0.82rem; font-weight: 500; color: #d1d5db; line-height: 1.5; }
+    .news-meta { font-size: 0.72rem; color: #6b7280; margin-top: 3px; }
+    .news-sum { font-size: 0.75rem; color: #9ca3af; margin-top: 3px; }
+    .ntag { font-size: 0.68rem; padding: 2px 8px; border-radius: 99px; font-weight: 500; white-space: nowrap; }
+    .tbull { background: rgba(52,211,153,.15); color: #34d399; }
+    .tbear { background: rgba(248,113,113,.15); color: #f87171; }
+    .tneut { background: #1e2130; color: #9ca3af; }
+
+    /* 自選清單 */
+    .watchlist-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #2a2d3a; }
+    .watchlist-item:last-child { border-bottom: none; }
+    .wl-name { font-size: 0.88rem; font-weight: 600; color: #f1f5f9; }
+    .wl-ticker { font-size: 0.72rem; color: #6b7280; margin-top: 1px; }
+    .wl-price { font-size: 0.95rem; font-weight: 600; text-align: right; }
+    .wl-change { font-size: 0.75rem; text-align: right; }
+    .wl-alert { font-size: 0.68rem; padding: 2px 7px; border-radius: 99px; border: 1px solid #fbbf24; color: #fbbf24; white-space: nowrap; cursor: pointer; }
+    .wl-alert.active { background: rgba(251,191,36,.15); }
+    .wl-add { display: flex; gap: 8px; margin-top: 12px; }
+    .wl-add input { background: #0f1117; border: 1px solid #374151; color: #e0e0e0; border-radius: 8px; padding: 6px 10px; font-size: 0.82rem; flex: 1; }
+    .wl-add input:focus { outline: none; border-color: #60a5fa; }
+    .wl-add select { background: #0f1117; border: 1px solid #374151; color: #e0e0e0; border-radius: 8px; padding: 6px 8px; font-size: 0.82rem; }
+    .wl-add button { background: #1d4ed8; border: none; color: white; border-radius: 8px; padding: 6px 14px; font-size: 0.82rem; cursor: pointer; }
+    .wl-add button:hover { background: #2563eb; }
+    .wl-del { background: none; border: none; color: #6b7280; font-size: 0.82rem; cursor: pointer; padding: 2px 6px; }
+    .wl-del:hover { color: #f87171; }
+    .badge-tw { background: #1d4ed8; font-size: 0.65rem; padding: 1px 6px; border-radius: 4px; }
+    .badge-us { background: #7c3aed; font-size: 0.65rem; padding: 1px 6px; border-radius: 4px; }
+
+    .chart-wrap { position: relative; width: 100%; height: 180px; margin-bottom: 20px; }
+    .spinner-sm { display: inline-block; width: 13px; height: 13px; border: 2px solid #374151; border-top-color: #60a5fa; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-row { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: #6b7280; padding: 8px 0; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+    .dot-live { background: #34d399; } .dot-sim { background: #fbbf24; }
+    .section-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: .08em; color: #6b7280; margin-bottom: 10px; }
+    .total-row { background: #0f1117; border-radius: 10px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .total-label { font-size: 0.78rem; color: #6b7280; }
+    .total-val { font-size: 1.1rem; font-weight: 700; }
+
+    /* API 設定列 */
+    .api-bar { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 10px; padding: 12px 16px; margin-bottom: 20px; }
+    .api-bar-row { display: flex; gap: 8px; align-items: center; }
+    .api-bar input { flex: 1; background: #0f1117; border: 1px solid #374151; color: #e0e0e0; border-radius: 8px; padding: 6px 10px; font-size: 0.8rem; font-family: monospace; }
+    .api-bar input:focus { outline: none; border-color: #60a5fa; }
+    .api-bar button { background: #1d4ed8; border: none; color: white; border-radius: 8px; padding: 6px 14px; font-size: 0.8rem; cursor: pointer; white-space: nowrap; }
+    .api-bar button.sec { background: #1e2130; color: #9ca3af; }
+    .api-bar button:hover { opacity: .85; }
+    .api-hint { font-size: 0.72rem; color: #6b7280; margin-top: 6px; }
+    .api-hint a { color: #60a5fa; }
+    .api-collapsed { display: none; }
+
+    /* 特別關注 highlight */
+    .watchlist-item.featured { background: rgba(96,165,250,.05); border-radius: 8px; padding: 10px 8px; border-bottom: 1px solid #2a2d3a; }
+    .featured-star { color: #fbbf24; font-size: 0.82rem; margin-right: 4px; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark">
+  <div class="container-fluid px-4">
+    <span class="navbar-brand"><i class="bi bi-graph-up-arrow me-2"></i>股市監控</span>
+    <div class="d-flex gap-2 ms-auto align-items-center">
+      <a href="/" class="nav-link-custom">觀察清單</a>
+      <a href="/portfolio" class="nav-link-custom active">持倉監控</a>
+      <a href="/guitar" class="nav-link-custom"><i class="bi bi-music-note-beamed me-1"></i>吉他譜</a>
+      <span id="status-badge" class="ms-2" style="font-size:.75rem;color:#6b7280">
+        <span class="status-dot dot-sim"></span>模擬資料
+      </span>
+    </div>
+  </div>
+</nav>
+
+<div class="container-fluid px-4 py-4">
+  <div class="row g-4">
+
+    <!-- 左欄：持倉 + 分析 -->
+    <div class="col-lg-8">
+
+      <!-- API 設定 -->
+      <div class="api-bar mb-3" id="api-bar">
+        <div class="api-bar-row">
+          <i class="bi bi-key" style="color:#6b7280;font-size:.9rem"></i>
+          <input type="password" id="api-key-input" placeholder="Fugle API Key（收到模擬金鑰後貼上）" />
+          <input type="text" id="proxy-input" value="http://localhost:3001" style="max-width:200px" />
+          <button onclick="saveApiKey()">連線</button>
+          <button class="sec" onclick="toggleApiBar()">收起</button>
+        </div>
+        <div class="api-hint">
+          金鑰申請：<a href="https://developer.fugle.tw/docs/key/" target="_blank">developer.fugle.tw</a>
+          ｜Proxy server 需在本機執行 <code style="font-size:.7rem;color:#a78bfa">node server.js</code>
+        </div>
+      </div>
+
+      <!-- 持倉卡片 -->
+      <div class="section-label">我的持倉</div>
+      <div class="row g-3 mb-3">
+        <div class="col-6">
+          <div class="position-card selected" id="card-ml" onclick="selectStock('ml')">
+            <div class="p-name">盟立</div>
+            <div class="p-ticker">2464 · TW</div>
+            <div class="p-price up" id="ml-price">—</div>
+            <div class="p-change" id="ml-change">—</div>
+            <div class="p-pnl">成本 70 元 × 10張 ｜ 損益：<span class="pnl-val" id="ml-pnl">—</span></div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="position-card" id="card-ss" onclick="selectStock('ss')">
+            <div class="p-name">時碩工業</div>
+            <div class="p-ticker">4566 · TW</div>
+            <div class="p-price" id="ss-price">—</div>
+            <div class="p-change" id="ss-change">—</div>
+            <div class="p-pnl">成本 66 元 × 10張 ｜ 損益：<span class="pnl-val" id="ss-pnl">—</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 合計損益 -->
+      <div class="total-row">
+        <div>
+          <div class="total-label">總成本</div>
+          <div style="font-size:.88rem;color:#9ca3af">$1,360,000</div>
+        </div>
+        <div style="text-align:right">
+          <div class="total-label">合計損益</div>
+          <div class="total-val" id="total-pnl">—</div>
+        </div>
+      </div>
+
+      <!-- Tab 列 -->
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab('verdict',this)">股癌評估</button>
+        <button class="tab-btn" onclick="switchTab('tech',this)">技術指標</button>
+        <button class="tab-btn" onclick="switchTab('inst',this)">三大法人</button>
+        <button class="tab-btn" onclick="switchTab('news',this)">新聞掃描</button>
+      </div>
+
+      <!-- 股癌評估 -->
+      <div id="tab-verdict">
+        <div class="verdict-box">
+          <div class="verdict-label" id="verdict-label">股癌式評估</div>
+          <div class="verdict-text" id="verdict-text">點下方按鈕，讓 AI 開炮。</div>
+        </div>
+        <div class="section-label">技術訊號</div>
+        <div id="signals-list" class="mb-3"></div>
+        <button class="ai-btn" onclick="runAnalysis()">讓 AI 開炮分析 ↗</button>
+        <div id="ai-loading" style="display:none" class="loading-row"><span class="spinner-sm"></span> 股癌模式啟動中...</div>
+      </div>
+
+      <!-- 技術指標 -->
+      <div id="tab-tech" style="display:none">
+        <div class="section-label" id="tech-title">技術指標</div>
+        <div class="ind-grid" id="tech-grid"></div>
+        <div class="section-label">近期走勢</div>
+        <div class="chart-wrap"><canvas id="priceChart" role="img" aria-label="近期收盤價走勢"></canvas></div>
+      </div>
+
+      <!-- 三大法人 -->
+      <div id="tab-inst" style="display:none">
+        <div class="section-label" id="inst-title">三大法人</div>
+        <div class="inst-grid" id="inst-grid"></div>
+        <div class="chart-wrap"><canvas id="instChart" role="img" aria-label="三大法人買賣超"></canvas></div>
+      </div>
+
+      <!-- 新聞 -->
+      <div id="tab-news" style="display:none">
+        <button class="ai-btn" onclick="scanNews()">AI 搜尋最新新聞 ↗</button>
+        <div id="news-loading" style="display:none" class="loading-row"><span class="spinner-sm"></span> 掃描中...</div>
+        <div id="news-list"></div>
+      </div>
+
+    </div>
+
+    <!-- 右欄：自選清單 -->
+    <div class="col-lg-4">
+      <div class="card">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <span><i class="bi bi-star me-1"></i>自選觀察清單</span>
+          <button class="ai-btn" style="width:auto;padding:3px 10px;font-size:.72rem;margin:0" onclick="refreshWatchlist()">
+            <i class="bi bi-arrow-clockwise"></i>
+          </button>
+        </div>
+        <div class="card-body p-3">
+
+          <!-- 特別關注區 -->
+          <div class="section-label"><i class="bi bi-lightning-charge" style="color:#fbbf24"></i> 特別關注</div>
+          <div id="featured-list" class="mb-3"></div>
+
+          <!-- 一般觀察 -->
+          <div class="section-label">觀察中</div>
+          <div id="watchlist-list"></div>
+
+          <!-- 新增表單 -->
+          <div class="wl-add mt-3">
+            <input type="text" id="wl-ticker" placeholder="股票代碼，如 2330" maxlength="8" />
+            <input type="text" id="wl-name" placeholder="名稱" maxlength="10" style="max-width:80px" />
+            <select id="wl-market">
+              <option value="TW">TW</option>
+              <option value="US">US</option>
+            </select>
+            <button onclick="addWatchlist()"><i class="bi bi-plus"></i></button>
+          </div>
+          <div style="font-size:.7rem;color:#6b7280;margin-top:6px">
+            點 <i class="bi bi-star" style="color:#fbbf24"></i> 設為特別關注
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let currentStock = 'ml';
+let apiKey = '';
+let proxyUrl = 'http://localhost:3001';
+let useProxy = false;
+let pChart = null, iChart = null;
+
+const POSITIONS = {
+  ml: { code:'2464', name:'盟立', cost:70, shares:10000 },
+  ss: { code:'4566', name:'時碩工業', cost:66, shares:10000 }
+};
+
+const SIM = {
+  ml: { price:70.20, prev:70.00, high:71.00, low:69.80, vol:3241,
+        closes:[67.5,68.0,68.8,69.5,70.0,70.2],
+        foreign:3241, trust:512, dealer:-188 },
+  ss: { price:65.50, prev:65.80, high:66.20, low:64.90, vol:1820,
+        closes:[67.5,67.2,66.8,66.5,66.0,65.5],
+        foreign:-820, trust:91, dealer:-55 }
+};
+
+let liveData = { ml: SIM.ml, ss: SIM.ss };
+let watchlist = [];
+
+// ── API ───────────────────────────────────────────────────
+function saveApiKey() {
+  const k = document.getElementById('api-key-input').value.trim();
+  const p = document.getElementById('proxy-input').value.trim();
+  if (!k) { alert('請輸入 API Key'); return; }
+  apiKey = k;
+  proxyUrl = p || 'http://localhost:3001';
+  useProxy = true;
+  loadAll();
+}
+
+function toggleApiBar() {
+  const rows = document.querySelectorAll('.api-bar .api-bar-row, .api-bar .api-hint');
+  const hidden = rows[0].style.display === 'none';
+  rows.forEach(r => r.style.display = hidden ? '' : 'none');
+}
+
+async function proxyGet(path) {
+  const r = await fetch(proxyUrl + path);
+  if (!r.ok) throw new Error('proxy ' + r.status);
+  return r.json();
+}
+
+// ── 載入主資料 ────────────────────────────────────────────
+async function loadAll() {
+  setBadge('updating');
+  if (useProxy) {
+    try {
+      const [ml, ss] = await Promise.all([proxyGet('/quote/2464'), proxyGet('/quote/4566')]);
+      liveData.ml = { price:ml.price, prev:ml.prev, high:ml.high, low:ml.low, vol:ml.volume, closes:SIM.ml.closes, foreign:SIM.ml.foreign, trust:SIM.ml.trust, dealer:SIM.ml.dealer };
+      liveData.ss = { price:ss.price, prev:ss.prev, high:ss.high, low:ss.low, vol:ss.volume, closes:SIM.ss.closes, foreign:SIM.ss.foreign, trust:SIM.ss.trust, dealer:SIM.ss.dealer };
+      setBadge('live');
+    } catch(e) { liveData = { ml:SIM.ml, ss:SIM.ss }; setBadge('sim'); }
+  } else {
+    liveData = { ml:SIM.ml, ss:SIM.ss };
+    setBadge('sim');
+  }
+  updateCards();
+  updateSignals();
+  loadWatchlistPrices();
+}
+
+function setBadge(state) {
+  const el = document.getElementById('status-badge');
+  if (state==='live') el.innerHTML = '<span class="status-dot dot-live"></span>即時資料';
+  else if (state==='sim') el.innerHTML = '<span class="status-dot dot-sim"></span>模擬資料';
+  else el.innerHTML = '<span class="spinner-sm"></span> 更新中';
+}
+
+// ── 持倉卡片 ──────────────────────────────────────────────
+function pnlFmt(v) { return (v>=0?'+':'-')+'$'+Math.abs(v).toLocaleString(); }
+
+function updateCards() {
+  let total = 0;
+  ['ml','ss'].forEach(id => {
+    const s = POSITIONS[id], d = liveData[id];
+    const price = +d.price, prev = +d.prev;
+    const chg = +(price-prev).toFixed(2);
+    const pct = prev ? +(chg/prev*100).toFixed(2) : 0;
+    const pnl = Math.round((price-s.cost)*s.shares);
+    total += pnl;
+    document.getElementById(`${id}-price`).textContent = price.toFixed(2);
+    document.getElementById(`${id}-price`).className = 'p-price '+(chg>0?'up':chg<0?'down':'flat');
+    const ce = document.getElementById(`${id}-change`);
+    ce.textContent = `${chg>=0?'▲':'▼'} ${chg>=0?'+':''}${chg} (${pct>=0?'+':''}${pct}%)`;
+    ce.className = 'p-change '+(chg>0?'up':chg<0?'down':'flat');
+    const pe = document.getElementById(`${id}-pnl`);
+    pe.textContent = pnlFmt(pnl);
+    pe.className = 'pnl-val '+(pnl>=0?'up':'down');
+  });
+  const te = document.getElementById('total-pnl');
+  te.textContent = pnlFmt(total);
+  te.className = 'total-val '+(total>=0?'up':'down');
+}
+
+// ── 技術指標（估算） ──────────────────────────────────────
+function getInd(id) {
+  const d = liveData[id], p = +d.price;
+  return {
+    ma5: +(p*.998).toFixed(2), ma20: +(p*.982).toFixed(2), ma60: +(p*.935).toFixed(2),
+    rsi: +(40+Math.random()*30).toFixed(1), macd: +((Math.random()-.4)*2).toFixed(2),
+    bbu: +(p*1.045).toFixed(2), bbm: +(p*1.005).toFixed(2), bbl: +(p*.965).toFixed(2),
+    kv: +(30+Math.random()*50).toFixed(1), dv: +(30+Math.random()*50).toFixed(1),
+    volr: +(0.7+Math.random()*.8).toFixed(2), closes: d.closes || SIM[id].closes
+  };
+}
+
+function renderTech(id) {
+  const s = POSITIONS[id], ind = getInd(id), p = +liveData[id].price;
+  document.getElementById('tech-title').textContent = `技術指標 — ${s.name} ${s.code}`;
+  const rC=ind.rsi>70?'down':ind.rsi<30?'up':'warn';
+  const mC=ind.macd>=0?'up':'down';
+  const kC=+ind.kv>+ind.dv?'up':'down';
+  const vC=+ind.volr>1.3?'up':+ind.volr<0.7?'down':'warn';
+  document.getElementById('tech-grid').innerHTML = `
+    <div class="ind-card"><div class="ind-label">MA5</div><div class="ind-val">${ind.ma5}</div><div class="ind-hint ${p>ind.ma5?'up':'down'}">${p>ind.ma5?'股價在上方':'股價在下方'}</div></div>
+    <div class="ind-card"><div class="ind-label">MA20</div><div class="ind-val">${ind.ma20}</div><div class="ind-hint ${ind.ma5>ind.ma20?'up':'down'}">${ind.ma5>ind.ma20?'多頭排列':'空頭排列'}</div></div>
+    <div class="ind-card"><div class="ind-label">MA60</div><div class="ind-val">${ind.ma60}</div><div class="ind-hint" style="color:#6b7280">長線支撐</div></div>
+    <div class="ind-card"><div class="ind-label">RSI(14)</div><div class="ind-val ${rC}">${ind.rsi}</div><div class="ind-hint ${rC}">${ind.rsi>70?'超買區':ind.rsi<30?'超賣區':'中性'}</div></div>
+    <div class="ind-card"><div class="ind-label">KD</div><div class="ind-val ${kC}">K:${ind.kv} D:${ind.dv}</div><div class="ind-hint ${kC}">${+ind.kv>+ind.dv?'K>D 偏多':'K<D 偏空'}</div></div>
+    <div class="ind-card"><div class="ind-label">MACD</div><div class="ind-val ${mC}">${ind.macd>=0?'+':''}${ind.macd}</div><div class="ind-hint ${mC}">${ind.macd>=0?'柱狀正':'柱狀負'}</div></div>
+    <div class="ind-card"><div class="ind-label">布林上軌</div><div class="ind-val">${ind.bbu}</div><div class="ind-hint" style="color:#6b7280">壓力位</div></div>
+    <div class="ind-card"><div class="ind-label">布林中軌</div><div class="ind-val">${ind.bbm}</div><div class="ind-hint" style="color:#6b7280">動態均線</div></div>
+    <div class="ind-card"><div class="ind-label">量能比</div><div class="ind-val ${vC}">${ind.volr}x</div><div class="ind-hint ${vC}">${+ind.volr>1.3?'放量':+ind.volr<0.7?'縮量':'平量'}</div></div>
+  `;
+  if (pChart) pChart.destroy();
+  const closes = ind.closes.slice(-8);
+  const labels = closes.map((_,i)=>i===closes.length-1?'今日':`${closes.length-1-i}日前`);
+  const isUp = closes[closes.length-1]>=closes[0];
+  pChart = new Chart(document.getElementById('priceChart').getContext('2d'),{
+    type:'line',
+    data:{ labels, datasets:[{ label:'收盤', data:closes, borderColor:isUp?'#34d399':'#f87171', backgroundColor:isUp?'rgba(52,211,153,.08)':'rgba(248,113,113,.08)', tension:.3, fill:true, pointRadius:3 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ x:{ ticks:{ color:'#6b7280', font:{size:10}, maxRotation:0 } }, y:{ ticks:{ color:'#6b7280', font:{size:10} }, grid:{ color:'rgba(255,255,255,.05)' } } } }
+  });
+}
+
+function renderInst(id) {
+  const s = POSITIONS[id], d = liveData[id];
+  document.getElementById('inst-title').textContent = `三大法人 — ${s.name}（TWSE 盤後）`;
+  const foreign = d.foreign||0, trust = d.trust||0, dealer = d.dealer||0;
+  const fmt = v=>(v>=0?'+':'')+v.toLocaleString()+' 張';
+  document.getElementById('inst-grid').innerHTML = `
+    <div class="inst-card"><div class="inst-name">外資</div><div class="inst-val ${foreign>=0?'up':'down'}">${fmt(foreign)}</div><div class="inst-note">${foreign>=0?'買超':'賣超'}</div></div>
+    <div class="inst-card"><div class="inst-name">投信</div><div class="inst-val ${trust>=0?'up':'down'}">${fmt(trust)}</div><div class="inst-note">${trust>=0?'買超':'賣超'}</div></div>
+    <div class="inst-card"><div class="inst-name">自營商</div><div class="inst-val ${dealer>=0?'up':'down'}">${fmt(dealer)}</div><div class="inst-note">${dealer>=0?'買超':'賣超'}</div></div>
+  `;
+  if (iChart) iChart.destroy();
+  iChart = new Chart(document.getElementById('instChart').getContext('2d'),{
+    type:'bar',
+    data:{ labels:['外資','投信','自營商'], datasets:[{ label:'買賣超(張)', data:[foreign,trust,dealer], backgroundColor:[foreign,trust,dealer].map(v=>v>=0?'rgba(52,211,153,.7)':'rgba(248,113,113,.7)'), borderRadius:4 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} }, scales:{ x:{ ticks:{color:'#6b7280',font:{size:10}} }, y:{ ticks:{color:'#6b7280',font:{size:10}}, grid:{color:'rgba(255,255,255,.05)'} } } }
+  });
+}
+
+// ── 訊號 ──────────────────────────────────────────────────
+function updateSignals() {
+  const ind = getInd(currentStock), p = +liveData[currentStock].price;
+  const sigs = [];
+  if (p>ind.ma5 && ind.ma5>ind.ma20) sigs.push({d:'g',t:'MA 多頭排列，短中線趨勢向上'});
+  else if (p<ind.ma5) sigs.push({d:'r',t:'MA 空頭排列，短線走弱需留意'});
+  else sigs.push({d:'a',t:'MA 排列整理中，方向待確認'});
+  if (ind.rsi>70) sigs.push({d:'r',t:`RSI ${ind.rsi} 超買，短線回調風險升高`});
+  else if (ind.rsi<35) sigs.push({d:'g',t:`RSI ${ind.rsi} 接近超賣，逢低布局機會`});
+  else sigs.push({d:'a',t:`RSI ${ind.rsi} 中性區，動能待觀察`});
+  if (ind.macd>=0) sigs.push({d:'g',t:`MACD +${ind.macd} 柱狀翻正，買方動能回升`});
+  else sigs.push({d:'r',t:`MACD ${ind.macd} 柱狀為負，賣方仍主導`});
+  if (+ind.volr>1.3) sigs.push({d:'g',t:'成交量放大，走勢可信度提升'});
+  else sigs.push({d:'a',t:'量能未顯著放大，突破真偽待確認'});
+  document.getElementById('signals-list').innerHTML = sigs.map(s=>
+    `<div class="sig-row"><span class="sig-dot dot-${s.d}"></span><span class="sig-txt">${s.t}</span></div>`
+  ).join('');
+  document.getElementById('verdict-label').textContent = `股癌式評估 — ${POSITIONS[currentStock].name}`;
+  document.getElementById('verdict-text').textContent = '點下方按鈕，讓 AI 開炮。';
+}
+
+// ── 選股 / Tab ────────────────────────────────────────────
+function selectStock(id) {
+  currentStock = id;
+  document.getElementById('card-ml').classList.toggle('selected', id==='ml');
+  document.getElementById('card-ss').classList.toggle('selected', id==='ss');
+  updateSignals();
+  if (document.getElementById('tab-tech').style.display!=='none') renderTech(id);
+  if (document.getElementById('tab-inst').style.display!=='none') renderInst(id);
+}
+
+function switchTab(name, el) {
+  ['verdict','tech','inst','news'].forEach(t=>document.getElementById('tab-'+t).style.display=t===name?'':'none');
+  document.querySelectorAll('.tab-btn').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  if (name==='tech') renderTech(currentStock);
+  if (name==='inst') renderInst(currentStock);
+}
+
+// ── AI 分析 ───────────────────────────────────────────────
+async function runAnalysis() {
+  const id = currentStock, s = POSITIONS[id], d = liveData[id];
+  const price = +d.price, ind = getInd(id);
+  const pnl = Math.round((price-s.cost)*s.shares);
+  document.getElementById('ai-loading').style.display='';
+  document.getElementById('verdict-text').textContent='';
+  const prompt = `你是「股癌」謝孟恭，用他的說話風格分析這檔台股，繁體中文，直接犀利帶點幽默。
+
+股票：${s.name} ${s.code}
+買入成本：${s.cost} 元 × ${s.shares/1000} 張，目前股價 ${price.toFixed(2)} 元，損益 ${pnl>=0?'+':''}${pnl.toLocaleString()} 元
+MA5=${ind.ma5} MA20=${ind.ma20} MA60=${ind.ma60} RSI=${ind.rsi} MACD=${ind.macd} KD=K:${ind.kv}/D:${ind.dv} 布林上軌=${ind.bbu} 量能比=${ind.volr}x
+
+請給出：
+1. 這檔現在有沒有戲（一句話）
+2. 最大風險
+3. 操盤建議（抱、加碼、減碼、停損）
+4. 股癌式結語（帶幽默）
+150字以內。`;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})
+    });
+    const data = await res.json();
+    document.getElementById('verdict-text').innerHTML = data.content.map(b=>b.text||'').join('').replace(/\n/g,'<br>');
+  } catch(e) {
+    document.getElementById('verdict-text').textContent='分析失敗，稍後再試。';
+  }
+  document.getElementById('ai-loading').style.display='none';
+}
+
+// ── 新聞掃描 ──────────────────────────────────────────────
+async function scanNews() {
+  const s = POSITIONS[currentStock];
+  document.getElementById('news-loading').style.display='';
+  document.getElementById('news-list').innerHTML='';
+  const prompt = `請針對台股「${s.name}」（代碼 ${s.code}）搜尋最新相關新聞並分析，繁體中文。
+回傳純 JSON array，不要 markdown：
+[{"title":"標題(20字內)","source":"來源","time":"時間","sentiment":"bullish|bearish|neutral","summary":"重點(30字內)"}]
+最多5則。`;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,
+        tools:[{type:'web_search_20250305',name:'web_search'}],
+        messages:[{role:'user',content:prompt}]})
+    });
+    const data = await res.json();
+    const text = data.content.map(b=>b.text||'').join('').replace(/```json|```/g,'').trim();
+    const s2=text.indexOf('['), e=text.lastIndexOf(']');
+    const items = JSON.parse(text.slice(s2,e+1));
+    const tmap={bullish:'tbull',bearish:'tbear',neutral:'tneut'};
+    const lmap={bullish:'利多',bearish:'利空',neutral:'中性'};
+    document.getElementById('news-list').innerHTML = items.map(n=>`
+      <div class="news-item">
+        <div class="d-flex align-items-start justify-content-between gap-2">
+          <div class="news-title">${n.title}</div>
+          <span class="ntag ${tmap[n.sentiment]||'tneut'}">${lmap[n.sentiment]||'中性'}</span>
+        </div>
+        <div class="news-meta">${n.source} · ${n.time}</div>
+        <div class="news-sum">${n.summary}</div>
+      </div>`).join('');
+  } catch(e) {
+    document.getElementById('news-list').innerHTML='<div style="font-size:.8rem;color:#6b7280;padding:.5rem 0">掃描失敗，請稍後再試。</div>';
+  }
+  document.getElementById('news-loading').style.display='none';
+}
+
+// ── 自選清單 ──────────────────────────────────────────────
+async function fetchWatchlist() {
+  const res = await fetch('/api/watchlist');
+  watchlist = await res.json();
+}
+
+async function addWatchlist() {
+  const ticker = document.getElementById('wl-ticker').value.trim().toUpperCase();
+  const name = document.getElementById('wl-name').value.trim();
+  const market = document.getElementById('wl-market').value;
+  if (!ticker) return;
+  await fetch('/api/watchlist', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ticker, name:name||ticker, market, featured:false})
+  });
+  document.getElementById('wl-ticker').value='';
+  document.getElementById('wl-name').value='';
+  await fetchWatchlist();
+  loadWatchlistPrices();
+}
+
+async function deleteWatchlist(ticker) {
+  await fetch(`/api/watchlist/${ticker}`, {method:'DELETE'});
+  await fetchWatchlist();
+  loadWatchlistPrices();
+}
+
+async function toggleFeatured(ticker) {
+  const item = watchlist.find(w=>w.ticker===ticker);
+  if (!item) return;
+  item.featured = !item.featured;
+  await fetch('/api/watchlist', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(item)
+  });
+  await fetchWatchlist();
+  loadWatchlistPrices();
+}
+
+let wlPrices = {};
+
+async function loadWatchlistPrices() {
+  await fetchWatchlist();
+  try {
+    const res = await fetch('/api/data');
+    const data = await res.json();
+    wlPrices = {};
+    (data.stocks||[]).forEach(s => { wlPrices[s.ticker] = s; });
+  } catch(e) {}
+  renderWatchlist();
+}
+
+function renderWatchlist() {
+  const featured = watchlist.filter(w=>w.featured);
+  const normal = watchlist.filter(w=>!w.featured);
+
+  const mkItem = (w, isFeatured) => {
+    const d = wlPrices[w.ticker];
+    const price = d ? d.price?.toFixed(2) : '—';
+    const chg = d ? d.change_pct : null;
+    const chgCls = chg==null?'flat':chg>0?'up':chg<0?'down':'flat';
+    const chgTxt = chg==null?'—':`${chg>0?'+':''}${chg.toFixed(2)}%`;
+    return `<div class="watchlist-item${isFeatured?' featured':''}">
+      <div>
+        ${isFeatured?'<span class="featured-star"><i class="bi bi-star-fill"></i></span>':''}
+        <div class="wl-name">${w.name} <span class="badge ${w.market==='TW'?'badge-tw':'badge-us'}">${w.market}</span></div>
+        <div class="wl-ticker">${w.ticker}</div>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <div>
+          <div class="wl-price ${chgCls}">${price}</div>
+          <div class="wl-change ${chgCls}">${chgTxt}</div>
+        </div>
+        <button class="wl-alert${w.featured?' active':''}" onclick="toggleFeatured('${w.ticker}')" title="特別關注">
+          <i class="bi bi-${w.featured?'star-fill':'star'}"></i>
+        </button>
+        <button class="wl-del" onclick="deleteWatchlist('${w.ticker}')"><i class="bi bi-x"></i></button>
+      </div>
+    </div>`;
+  };
+
+  document.getElementById('featured-list').innerHTML = featured.length
+    ? featured.map(w=>mkItem(w,true)).join('')
+    : '<div style="font-size:.75rem;color:#6b7280;padding:6px 0">尚無特別關注，點 ★ 加入</div>';
+
+  document.getElementById('watchlist-list').innerHTML = normal.length
+    ? normal.map(w=>mkItem(w,false)).join('')
+    : '<div style="font-size:.75rem;color:#6b7280;padding:6px 0">尚無觀察股票</div>';
+}
+
+async function refreshWatchlist() { await loadWatchlistPrices(); }
+
+// ── 初始化 ────────────────────────────────────────────────
+loadAll();
+loadWatchlistPrices();
+setInterval(loadAll, 15*60*1000);
+setInterval(loadWatchlistPrices, 15*60*1000);
+</script>
+</body>
+</html>
