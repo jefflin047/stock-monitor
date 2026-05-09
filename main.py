@@ -588,11 +588,113 @@ def api_portfolio_prices():
     return jsonify(result)
 
 
+_ZH_RECIPES = [
+    {"name":"番茄炒蛋","main_ingredient":"番茄","category":"家常菜",
+     "ingredients":["番茄 2顆","雞蛋 3顆","鹽 1小匙","糖 半小匙","蔥花 少許","食用油 適量"],
+     "steps":["番茄切塊，雞蛋打散加少許鹽","熱鍋下油炒蛋至半熟盛起","原鍋爆香蔥白，放入番茄大火炒出汁","加鹽、糖調味，放回炒蛋翻拌","撒蔥花起鍋"],
+     "notes":"番茄要炒出汁才夠味，糖可依口味增減","photo_url":"","social_links":[]},
+    {"name":"三杯雞","main_ingredient":"雞腿","category":"台式料理",
+     "ingredients":["雞腿 600g","老薑片 30g","大蒜 10瓣","九層塔 一把","麻油 3大匙","醬油 3大匙","米酒 3大匙","糖 1大匙"],
+     "steps":["雞腿切塊，薑切片，蒜去皮","麻油小火爆香薑片至金黃","放入大蒜炒香，加雞塊大火翻炒上色","加醬油、米酒、糖翻炒均勻","蓋蓋中火燜8分鐘至收汁","起鍋前放九層塔大火翻炒即可"],
+     "notes":"麻油不可高溫久炸；九層塔最後加保留香氣","photo_url":"","social_links":[]},
+    {"name":"紅燒肉","main_ingredient":"五花肉","category":"家常菜",
+     "ingredients":["五花肉 600g","醬油 4大匙","冰糖 2大匙","米酒 3大匙","蔥 2根","薑片 3片","八角 2顆","水 適量"],
+     "steps":["五花肉切塊，冷水入鍋煮滾撈起洗淨","鍋中放冰糖小火炒至琥珀色","放入肉塊翻炒上色","加醬油、米酒、蔥、薑、八角，加水至蓋過肉","大火煮滾轉小火燉40分鐘","開蓋大火收汁至濃稠"],
+     "notes":"冰糖焦化後顏色更紅亮；燉煮時間越長越入味","photo_url":"","social_links":[]},
+    {"name":"宮保雞丁","main_ingredient":"雞胸肉","category":"川菜",
+     "ingredients":["雞胸肉 300g","花生 50g","乾辣椒 8根","花椒 1小匙","蔥段 適量","醬油 1大匙","醋 1大匙","糖 1大匙","太白粉 1小匙","米酒 1大匙","鹽 少許"],
+     "steps":["雞胸切丁，加醬油、米酒、太白粉醃10分鐘","混合醬汁：醬油、醋、糖、太白粉水備用","熱油鍋爆香花椒、乾辣椒","放入雞丁大火翻炒至熟","加蔥段翻炒，倒入醬汁快速翻炒","最後加花生炒勻即可"],
+     "notes":"醋讓口味更有層次；花生最後加才能保持脆感","photo_url":"","social_links":[]},
+    {"name":"麻婆豆腐","main_ingredient":"豆腐","category":"川菜",
+     "ingredients":["嫩豆腐 1盒","豬絞肉 100g","豆瓣醬 2大匙","蒜末 2瓣","薑末 少許","醬油 1大匙","花椒粉 1小匙","太白粉水 適量","蔥花 少許","食用油 適量"],
+     "steps":["豆腐切丁，用鹽水泡5分鐘備用","熱鍋下油炒香蒜末、薑末","放入豬絞肉炒熟","加豆瓣醬炒出紅油","加醬油和適量水煮滾，放入豆腐輕輕翻炒","用太白粉水勾芡，撒花椒粉和蔥花"],
+     "notes":"豆腐先鹽水泡過比較不易碎","photo_url":"","social_links":[]},
+    {"name":"滷肉飯","main_ingredient":"五花肉","category":"台式料理",
+     "ingredients":["五花肉 500g","紅蔥頭 8顆","醬油 5大匙","冰糖 1大匙","米酒 2大匙","五香粉 少許","白胡椒 少許","水 300ml","白飯 適量"],
+     "steps":["五花肉切小丁或條狀","紅蔥頭切片，熱油炸至金黃撈起","原鍋炒豬肉至出油上色","加入炸紅蔥頭、醬油、冰糖、米酒、五香粉","加水大火煮滾轉小火燉40分鐘","收汁後淋在白飯上"],
+     "notes":"紅蔥頭是靈魂，不可省略；燉越久越香","photo_url":"","social_links":[]},
+    {"name":"清炒空心菜","main_ingredient":"空心菜","category":"家常菜",
+     "ingredients":["空心菜 300g","大蒜 3瓣","辣椒 1根（可省）","鹽 適量","食用油 適量"],
+     "steps":["空心菜洗淨切段，蒜切末","熱鍋下油爆香蒜末和辣椒","大火放入空心菜迅速翻炒","加鹽調味炒至軟身即可起鍋"],
+     "notes":"大火快炒才能保留脆嫩口感","photo_url":"","social_links":[]},
+    {"name":"蒸蛋","main_ingredient":"雞蛋","category":"家常菜",
+     "ingredients":["雞蛋 3顆","高湯或水 200ml（蛋液的1.5倍）","鹽 少許","醬油 少許","蔥花 少許","芝麻油 少許"],
+     "steps":["雞蛋打散，加鹽輕輕攪拌均勻","加入高湯（溫熱）攪拌","過篩去除氣泡","覆蓋保鮮膜或鋁箔紙","中小火蒸12-15分鐘","淋上醬油和芝麻油，撒蔥花"],
+     "notes":"加溫熱高湯且過篩，蒸出來才細嫩光滑","photo_url":"","social_links":[]},
+    {"name":"香菇雞湯","main_ingredient":"雞肉","category":"湯品",
+     "ingredients":["雞腿 2支","乾香菇 8朵","薑片 3片","米酒 2大匙","鹽 適量","蔥段 適量","水 1500ml"],
+     "steps":["乾香菇泡發，剪去蒂頭；雞腿剁塊汆燙洗淨","鍋中放雞肉、香菇、薑片，加水大火煮滾","撈去浮沫，加米酒","轉小火燉40分鐘","加鹽調味，撒蔥段"],
+     "notes":"泡香菇的水過濾後加入湯中，味道更鮮","photo_url":"","social_links":[]},
+    {"name":"糖醋排骨","main_ingredient":"排骨","category":"家常菜",
+     "ingredients":["排骨 500g","醬油 2大匙","醋 3大匙","糖 3大匙","番茄醬 2大匙","蒜末 2瓣","太白粉 適量","食用油 適量","鹽 少許"],
+     "steps":["排骨加醬油、太白粉醃20分鐘","下鍋炸至金黃撈起","鍋留少許油爆香蒜末","加醋、糖、番茄醬、少許水調成醬汁煮滾","放入排骨大火翻炒至醬汁收稠"],
+     "notes":"醋要最後加才能保留酸味；比例可依個人口味調整","photo_url":"","social_links":[]},
+    {"name":"蔥爆牛肉","main_ingredient":"牛肉","category":"家常菜",
+     "ingredients":["牛肉片 300g","蔥 4根","醬油 2大匙","米酒 1大匙","太白粉 1小匙","糖 少許","薑末 少許","食用油 適量"],
+     "steps":["牛肉片加醬油、米酒、太白粉醃15分鐘","蔥切段備用","熱鍋大火下油，牛肉片快速炒至變色盛起","原鍋爆香蔥白段","放回牛肉加蔥綠翻炒均勻加糖調味"],
+     "notes":"牛肉要大火快炒才嫩；醃製時可加少許小蘇打","photo_url":"","social_links":[]},
+    {"name":"魚香茄子","main_ingredient":"茄子","category":"川菜",
+     "ingredients":["茄子 2條","豬絞肉 80g","蒜末 3瓣","薑末 少許","蔥花 少許","豆瓣醬 1大匙","醬油 1大匙","醋 1大匙","糖 1小匙","太白粉水 適量"],
+     "steps":["茄子切條，用鹽水泡10分鐘後擠乾","熱油鍋將茄子煎至軟化盛起","原鍋炒香蒜薑末，下絞肉炒熟","加豆瓣醬炒出紅油，加醬油醋糖調味","放回茄子翻炒均勻，用太白粉水勾薄芡","撒蔥花起鍋"],
+     "notes":"茄子鹽水泡過不易氧化變黑","photo_url":"","social_links":[]},
+    {"name":"清蒸魚","main_ingredient":"魚","category":"家常菜",
+     "ingredients":["鱸魚 1條（約500g）","薑絲 適量","蔥絲 適量","辣椒絲 少許","蒸魚醬油 3大匙","熱油 適量"],
+     "steps":["魚洗淨在魚身兩側各劃3刀","放上薑片，大火蒸8-10分鐘","倒掉多餘湯汁","鋪上蔥絲辣椒絲","淋上蒸魚醬油","燒熱油潑在蔥絲上即可"],
+     "notes":"蒸的時間不可太長，否則魚肉老硬；油一定要夠熱","photo_url":"","social_links":[]},
+    {"name":"皮蛋豆腐","main_ingredient":"豆腐","category":"涼菜",
+     "ingredients":["嫩豆腐 1盒","皮蛋 2顆","蔥花 少許","薑末 少許","醬油膏 2大匙","芝麻油 1小匙","辣油 少許（可省）"],
+     "steps":["豆腐切塊擺盤","皮蛋剝殼切丁鋪在豆腐上","混合醬油膏、薑末、芝麻油調成醬汁淋上","撒蔥花，可加辣油"],
+     "notes":"豆腐冷藏後口感更佳；夏天快速料理首選","photo_url":"","social_links":[]},
+    {"name":"蔥油雞","main_ingredient":"雞腿","category":"台式料理",
+     "ingredients":["雞腿 2支","蔥 4根","薑片 3片","米酒 2大匙","鹽 適量","芝麻油 1大匙","食用油 3大匙"],
+     "steps":["鍋中放水、薑片、米酒、鹽煮滾","放入雞腿，中火煮15分鐘後關火","蓋蓋悶10分鐘，取出放涼切塊","蔥切細末，鋪在雞塊上","熱油加芝麻油燒至冒煙，淋在蔥末上","淋上少許醬油即可"],
+     "notes":"關火後悶熟可避免雞肉過老；蔥末要細才能被熱油激出香味","photo_url":"","social_links":[]},
+    {"name":"炒飯","main_ingredient":"白飯","category":"家常菜",
+     "ingredients":["冷白飯 2碗","雞蛋 2顆","蔥花 適量","鹽 適量","醬油 1大匙","食用油 適量","配料（火腿、玉米、蝦仁等）隨意"],
+     "steps":["蛋打散，熱鍋大火下油炒蛋至半熟盛起","原鍋補油，冷飯下鍋大火翻炒散開","加鹽、醬油調味翻炒","放回炒蛋和配料翻炒均勻","撒蔥花起鍋"],
+     "notes":"一定要用冷飯（最好是隔夜飯），飯粒才乾鬆不黏","photo_url":"","social_links":[]},
+    {"name":"紅燒獅子頭","main_ingredient":"豬絞肉","category":"家常菜",
+     "ingredients":["豬絞肉 500g","荸薺 6顆","薑末 1小匙","蔥末 2大匙","醬油 3大匙","糖 1大匙","米酒 1大匙","太白粉 2大匙","雞蛋 1顆","大白菜 半顆"],
+     "steps":["荸薺切碎，加入絞肉、薑蔥末、醬油、糖、太白粉、蛋混合均勻","用手捏出4顆大肉丸","熱油鍋將肉丸煎至各面金黃","鍋底鋪大白菜，放上肉丸","加醬油、糖、水（蓋過一半），蓋蓋小火燉40分鐘"],
+     "notes":"荸薺增加口感；燉煮過程不要翻動肉丸","photo_url":"","social_links":[]},
+    {"name":"酸辣湯","main_ingredient":"豆腐","category":"湯品",
+     "ingredients":["嫩豆腐 半盒","木耳 30g","金針菇 50g","蛋 2顆","豬血糕或豬肉絲 適量","醬油 2大匙","烏醋 3大匙","白胡椒 1小匙","太白粉水 適量","高湯 1000ml","鹽 適量"],
+     "steps":["高湯煮滾，放入木耳、金針菇、肉絲煮熟","加豆腐丁，調入醬油、鹽、白胡椒","用太白粉水勾芡至濃稠","蛋打散，慢慢倒入攪拌成蛋花","起鍋前加烏醋，撒香菜"],
+     "notes":"烏醋起鍋前才加，酸味才明顯；白胡椒量要夠辣才好喝","photo_url":"","social_links":[]},
+    {"name":"韓式泡菜炒豬肉","main_ingredient":"豬肉","category":"韓式料理",
+     "ingredients":["豬五花肉片 300g","泡菜 200g","洋蔥 半顆","蒜末 2瓣","醬油 1大匙","糖 少許","芝麻油 少許","白芝麻 少許"],
+     "steps":["洋蔥切絲，五花肉片切段","熱鍋不放油，五花肉片乾炒至出油上色","加蒜末翻炒香","放入泡菜和洋蔥大火翻炒","加醬油、糖調味","起鍋前淋芝麻油撒芝麻"],
+     "notes":"五花肉自帶油脂，不需另外加油；泡菜要熟成的才好吃","photo_url":"","social_links":[]},
+    {"name":"蚵仔煎","main_ingredient":"蚵仔","category":"台式小吃",
+     "ingredients":["蚵仔 150g","地瓜粉 3大匙","太白粉 1大匙","水 120ml","雞蛋 2顆","韭菜或小白菜 適量","甜辣醬 適量"],
+     "steps":["地瓜粉、太白粉加水調成粉漿","熱鍋下油放入蚵仔煎至微熟","倒入粉漿覆蓋蚵仔","蛋打在旁邊，翻面讓蛋在底部","放入蔬菜，再次翻面","盛盤淋上甜辣醬"],
+     "notes":"粉漿不能太稠；火不能太大，邊緣才會脆","photo_url":"","social_links":[]},
+]
+
+
+def _search_zh_recipes(q: str) -> list:
+    q = q.strip().lower()
+    results = []
+    for r in _ZH_RECIPES:
+        if (q in r["name"].lower() or
+                q in r["main_ingredient"].lower() or
+                q in r["category"].lower() or
+                any(q in ing.lower() for ing in r["ingredients"])):
+            results.append(r)
+    return results[:6]
+
+
 @app.route("/api/search/recipe")
 def api_search_recipe():
     q = request.args.get("q", "").strip()
     if not q:
         return jsonify([])
+
+    # Chinese query → search local database
+    if re.search(r"[一-鿿]", q):
+        return jsonify(_search_zh_recipes(q))
+
+    # English → TheMealDB
     try:
         resp = requests.get(
             "https://www.themealdb.com/api/json/v1/1/search.php",
@@ -641,49 +743,95 @@ def api_search_restaurant():
     q = request.args.get("q", "").strip()
     if not q:
         return jsonify([])
+
+    results = []
+
+    # Overpass API — richer tags (hours, cuisine, phone…)
     try:
-        resp = requests.get(
-            "https://nominatim.openstreetmap.org/search",
-            params={"q": q, "format": "json", "addressdetails": 1, "limit": 6},
+        overpass_query = f"""
+[out:json][timeout:12];
+(
+  node["name"~"{q}"]["amenity"](22.0,119.5,25.5,122.5);
+  way["name"~"{q}"]["amenity"](22.0,119.5,25.5,122.5);
+);
+out center body 8;
+"""
+        resp = requests.post(
+            "https://overpass-api.de/api/interpreter",
+            data={"data": overpass_query},
             headers={"User-Agent": "StockMonitorApp/1.0"},
-            timeout=8,
+            timeout=14,
         )
-        places = resp.json()
-        results = []
-        for place in places:
-            name = (place.get("name") or place.get("display_name", "").split(",")[0]).strip()
+        for el in resp.json().get("elements", []):
+            tags = el.get("tags", {})
+            name = tags.get("name", "").strip()
             if not name:
                 continue
-            lat, lon = place.get("lat"), place.get("lon")
+            lat = el.get("lat") or (el.get("center") or {}).get("lat")
+            lon = el.get("lon") or (el.get("center") or {}).get("lon")
             map_url = f"https://www.google.com/maps?q={lat},{lon}" if lat and lon else ""
-            display = place.get("display_name", "")
-            addr_parts = [p.strip() for p in display.split(",")[1:4] if p.strip()]
+
+            cuisine = tags.get("cuisine", "").replace(";", "、").replace("_", " ")
+            hours   = tags.get("opening_hours", "")
+            phone   = tags.get("phone") or tags.get("contact:phone", "")
+            website = tags.get("website") or tags.get("contact:website", "")
+            pay_parts = []
+            if tags.get("payment:cash")         == "yes": pay_parts.append("現金")
+            if tags.get("payment:credit_cards") == "yes" or tags.get("payment:visa") == "yes": pay_parts.append("信用卡")
+            if tags.get("payment:debit_cards")  == "yes": pay_parts.append("金融卡")
+
+            review_links = []
+            if website:
+                review_links.append({"label": "官方網站", "url": website})
+
             results.append({
                 "name":        name,
-                "cuisine":     "",
-                "hours":       "",
-                "reservation": "",
-                "payment":     "",
+                "cuisine":     cuisine,
+                "hours":       hours,
+                "reservation": f"電話 {phone}" if phone else "",
+                "payment":     "、".join(pay_parts),
                 "parking":     "",
                 "map_url":     map_url,
-                "my_notes":    ", ".join(addr_parts),
+                "my_notes":    "",
+                "review_links": review_links,
             })
-        if not results:
-            results.append({
-                "name": q, "cuisine": "", "hours": "", "reservation": "",
-                "payment": "", "parking": "",
-                "map_url": f"https://www.google.com/maps/search/{requests.utils.quote(q)}",
-                "my_notes": "",
-            })
-        return jsonify(results)
+            if len(results) >= 6:
+                break
     except Exception as e:
-        print(f"[restaurant search] {e}")
-        return jsonify([{
+        print(f"[overpass] {e}")
+
+    # Fall back to Nominatim if nothing found
+    if not results:
+        try:
+            resp = requests.get(
+                "https://nominatim.openstreetmap.org/search",
+                params={"q": q, "format": "json", "addressdetails": 1, "limit": 5},
+                headers={"User-Agent": "StockMonitorApp/1.0"},
+                timeout=8,
+            )
+            for place in resp.json():
+                name = (place.get("name") or place.get("display_name", "").split(",")[0]).strip()
+                if not name:
+                    continue
+                lat, lon = place.get("lat"), place.get("lon")
+                map_url = f"https://www.google.com/maps?q={lat},{lon}" if lat and lon else ""
+                results.append({
+                    "name": name, "cuisine": "", "hours": "", "reservation": "",
+                    "payment": "", "parking": "", "map_url": map_url,
+                    "my_notes": "", "review_links": [],
+                })
+        except Exception as e:
+            print(f"[nominatim] {e}")
+
+    if not results:
+        results.append({
             "name": q, "cuisine": "", "hours": "", "reservation": "",
             "payment": "", "parking": "",
             "map_url": f"https://www.google.com/maps/search/{requests.utils.quote(q)}",
-            "my_notes": "",
-        }])
+            "my_notes": "", "review_links": [],
+        })
+
+    return jsonify(results)
 
 
 @app.route("/food")

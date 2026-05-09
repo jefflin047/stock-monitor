@@ -843,7 +843,7 @@ function searchRest() {
 
 function fillRest(i) {
   var r = _restImport[i];
-  document.getElementById('r-name').value    = r.name;
+  document.getElementById('r-name').value    = r.name    || '';
   document.getElementById('r-cuisine').value = r.cuisine || '';
   document.getElementById('r-hours').value   = r.hours   || '';
   document.getElementById('r-res').value     = r.reservation || '';
@@ -851,8 +851,18 @@ function fillRest(i) {
   document.getElementById('r-park').value    = r.parking || '';
   document.getElementById('r-map').value     = r.map_url || '';
   var notesEl = document.getElementById('r-notes');
-  if (notesEl && r.my_notes) notesEl.value = r.my_notes;
-  document.getElementById('rest-import-results').innerHTML = '<div class="import-hint" style="color:#34d399">✓ 已帶入「' + esc(r.name) + '」，請補充詳細資訊後儲存</div>';
+  if (notesEl) notesEl.value = r.my_notes || '';
+  // review_links
+  var lc = document.getElementById('r-links');
+  if (lc && r.review_links && r.review_links.length) {
+    lc.innerHTML = '';
+    r.review_links.forEach(function(l){
+      var d = document.createElement('div'); d.className = 'link-row';
+      d.innerHTML = '<input class="lbl-inp" value="' + esc(l.label) + '" placeholder="標籤"><input value="' + esc(l.url) + '" placeholder="https://…"><button class="btn-del-row" onclick="this.closest(\'.link-row\').remove()"><i class="bi bi-x-lg"></i></button>';
+      lc.appendChild(d);
+    });
+  }
+  document.getElementById('rest-import-results').innerHTML = '<div class="import-hint" style="color:#34d399">✓ 已帶入「' + esc(r.name) + '」，請確認並補充資訊後儲存</div>';
 }
 
 // ── Init ──────────────────────────────────────
