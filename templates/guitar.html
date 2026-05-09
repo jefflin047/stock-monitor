@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>吉他學習</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <style>
+    body { background: #0f1117; color: #e0e0e0; font-family: 'Segoe UI', system-ui, sans-serif; }
+    .navbar { background: #1a1d27 !important; border-bottom: 1px solid #2a2d3a; }
+    .navbar-brand { font-weight: 700; font-size: 1.3rem; color: #a78bfa !important; }
+    .nav-link-custom { color: #9ca3af; text-decoration: none; padding: 6px 14px; border-radius: 8px; font-size: 0.9rem; transition: all .15s; }
+    .nav-link-custom:hover, .nav-link-custom.active { background: #2a2d3a; color: #e0e0e0; }
+
+    /* Page tabs */
+    .tab-btn { background: #1a1d27; border: 1px solid #2a2d3a; color: #9ca3af; padding: 8px 22px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; transition: all .15s; }
+    .tab-btn.active { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+    .section { display: none; }
+    .section.visible { display: block; }
+
+    /* Chord grid */
+    .chord-card { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 10px; padding: 12px 8px 8px; text-align: center; cursor: pointer; transition: border-color .15s; }
+    .chord-card:hover { border-color: #7c3aed; }
+    .chord-card.selected { border-color: #a78bfa; background: #1e1b35; }
+    .chord-label { font-size: 1rem; font-weight: 700; margin-top: 6px; color: #e0e0e0; }
+    .chord-sub  { font-size: 0.7rem; color: #6b7280; margin-top: 1px; }
+    .chord-detail { background: #1e1b35; border: 1px solid #7c3aed; border-radius: 12px; padding: 20px; margin-top: 12px; }
+
+    /* Search */
+    .search-input { background: #1a1d27; border: 1px solid #374151; color: #e0e0e0; border-radius: 10px; padding: 10px 16px; font-size: 1rem; width: 100%; }
+    .search-input:focus { outline: none; border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124,58,237,0.2); }
+    .result-card { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 10px; padding: 14px 16px; transition: border-color .15s; }
+    .result-card:hover { border-color: #7c3aed; }
+    .result-card a { color: #c4b5fd; text-decoration: none; font-weight: 600; font-size: 1rem; }
+    .result-card a:hover { color: #a78bfa; }
+    .result-artist { color: #6b7280; font-size: 0.85rem; margin-top: 3px; }
+
+    /* Beginner songs */
+    .song-card { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 10px; padding: 14px 16px; transition: border-color .15s; }
+    .song-card:hover { border-color: #7c3aed; }
+    .song-title { font-weight: 700; font-size: 0.95rem; }
+    .song-artist { color: #9ca3af; font-size: 0.82rem; }
+    .song-chords { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+    .chord-tag { background: #2a2d3a; border: 1px solid #374151; border-radius: 5px; padding: 2px 8px; font-size: 0.75rem; color: #c4b5fd; font-family: monospace; }
+    .diff-star { color: #fbbf24; font-size: 0.8rem; }
+    .diff-empty { color: #374151; font-size: 0.8rem; }
+    .cat-badge { font-size: 0.7rem; padding: 2px 7px; border-radius: 5px; }
+    .cat-zh { background: #1d4ed8; }
+    .cat-en { background: #065f46; }
+
+    /* Category filter */
+    .filter-btn { background: #1a1d27; border: 1px solid #2a2d3a; color: #9ca3af; padding: 5px 14px; border-radius: 7px; font-size: 0.82rem; cursor: pointer; transition: all .15s; }
+    .filter-btn.active { background: #312e81; border-color: #7c3aed; color: #c4b5fd; }
+
+    .tip-box { background: #1e1b35; border: 1px solid #4c1d95; border-radius: 10px; padding: 14px 16px; font-size: 0.85rem; color: #c4b5fd; }
+    .tip-box i { color: #a78bfa; }
+    canvas { display: block; margin: 0 auto; }
+
+    /* Strumming */
+    .strum-board { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 14px; padding: 24px 20px; }
+    .beat-grid { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    .beat-cell { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .beat-box { width: 56px; height: 72px; border: 2px solid #2a2d3a; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all .15s; background: #0f1117; user-select: none; position: relative; }
+    .beat-box:hover { border-color: #7c3aed; }
+    .beat-box.active-beat { border-color: #a78bfa; background: #1e1b35; box-shadow: 0 0 0 3px rgba(167,139,250,0.25); }
+    .beat-box.playing { background: #312e81; border-color: #a78bfa; }
+    .beat-box[data-stroke="D"] { border-color: #3b82f6; }
+    .beat-box[data-stroke="U"] { border-color: #10b981; }
+    .beat-box[data-stroke="X"] { border-color: #f59e0b; }
+    .stroke-arrow { font-size: 1.5rem; line-height: 1; }
+    .stroke-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.05em; }
+    .beat-number { font-size: 0.72rem; color: #6b7280; }
+    .beat-number.beat-1 { color: #a78bfa; font-weight: 700; }
+    .bar-divider { width: 2px; height: 80px; background: #374151; border-radius: 1px; align-self: center; }
+    .bpm-control { display: flex; align-items: center; gap: 12px; }
+    .bpm-slider { -webkit-appearance: none; appearance: none; width: 200px; height: 6px; border-radius: 3px; background: #374151; outline: none; }
+    .bpm-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #7c3aed; cursor: pointer; }
+    .bpm-num { font-size: 1.4rem; font-weight: 700; color: #c4b5fd; min-width: 42px; text-align: center; }
+    .btn-strum { border: none; border-radius: 10px; padding: 10px 24px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all .15s; }
+    .btn-play  { background: #7c3aed; color: #fff; }
+    .btn-play:hover  { background: #6d28d9; }
+    .btn-stop  { background: #374151; color: #e0e0e0; }
+    .btn-stop:hover  { background: #4b5563; }
+    .btn-stop:disabled { opacity: .4; cursor: default; }
+    .preset-btn { background: #1a1d27; border: 1px solid #2a2d3a; color: #9ca3af; padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 0.82rem; transition: all .15s; text-align: left; }
+    .preset-btn:hover { border-color: #7c3aed; color: #e0e0e0; }
+    .preset-btn.active { background: #312e81; border-color: #7c3aed; color: #c4b5fd; }
+    .beat-indicator { display: flex; gap: 6px; justify-content: center; margin-top: 12px; }
+    .beat-dot { width: 10px; height: 10px; border-radius: 50%; background: #374151; transition: background .08s; }
+    .beat-dot.on { background: #a78bfa; }
+
+    /* Playlist */
+    .playlist-card { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 10px; padding: 14px 16px; transition: border-color .15s; }
+    .playlist-card:hover { border-color: #7c3aed; }
+    .status-btn { border: none; border-radius: 6px; padding: 2px 9px; font-size: 0.72rem; font-weight: 700; cursor: pointer; letter-spacing: .04em; transition: all .15s; }
+    .status-todo     { background: #374151; color: #9ca3af; }
+    .status-learning { background: #1e3a8a; color: #93c5fd; }
+    .status-mastered { background: #064e3b; color: #6ee7b7; }
+    .note-edit { background: #0f1117; border: 1px solid #374151; color: #e0e0e0; border-radius: 6px; padding: 4px 8px; font-size: 0.78rem; width: 100%; resize: none; margin-top: 8px; }
+    .note-edit:focus { outline: none; border-color: #7c3aed; }
+    .btn-add-pl { background: none; border: 1px solid #374151; color: #9ca3af; border-radius: 7px; padding: 2px 8px; font-size: 0.72rem; cursor: pointer; transition: all .15s; white-space: nowrap; line-height: 1.6; }
+    .btn-add-pl:hover { border-color: #7c3aed; color: #c4b5fd; }
+    .btn-add-pl.added { border-color: #065f46; color: #6ee7b7; background: #064e3b22; cursor: default; }
+    .pl-empty { text-align: center; padding: 50px 20px; color: #6b7280; }
+
+    /* My Tabs upload */
+    .upload-zone { border: 2px dashed #374151; border-radius: 12px; padding: 28px 20px; text-align: center; cursor: pointer; transition: all .2s; color: #6b7280; user-select: none; }
+    .upload-zone:hover, .upload-zone.drag-over { border-color: #7c3aed; background: #1e1b3511; color: #c4b5fd; }
+    .tab-card { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 10px; padding: 14px 16px; transition: border-color .15s; }
+    .tab-card:hover { border-color: #7c3aed; }
+
+    /* Video search */
+    .platform-card { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 12px; padding: 18px; text-decoration: none; color: inherit; display: block; transition: all .18s; }
+    .platform-card:hover { border-color: var(--pc); transform: translateY(-2px); box-shadow: 0 6px 24px rgba(0,0,0,0.35); color: inherit; }
+    .platform-icon { font-size: 2rem; }
+    .platform-name { font-weight: 700; font-size: 0.95rem; margin-top: 8px; }
+    .platform-desc { font-size: 0.75rem; color: #6b7280; margin-top: 3px; line-height: 1.4; }
+    .platform-query { font-size: 0.72rem; margin-top: 8px; padding: 4px 8px; border-radius: 6px; background: #0f1117; color: #9ca3af; word-break: break-all; }
+
+    /* Pop music links */
+    .poplink-card { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 10px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 12px; transition: border-color .15s; height: 100%; }
+    .poplink-card:hover { border-color: #7c3aed; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark">
+  <div class="container-fluid px-4">
+    <span class="navbar-brand"><i class="bi bi-music-note-beamed me-2"></i>吉他學習</span>
+    <div class="ms-auto">
+      <a href="/" class="nav-link-custom"><i class="bi bi-graph-up-arrow me-1"></i>股市監控</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container-fluid px-4 py-4">
+
+  <!-- Tab navigation -->
+  <div class="d-flex gap-2 mb-4 flex-wrap">
+    <button class="tab-btn active" onclick="showTab('chords', this)">
+      <i class="bi bi-hand-index-thumb me-1"></i>和弦庫
+    </button>
+    <button class="tab-btn" onclick="showTab('strum', this)">
+      <i class="bi bi-music-note-list me-1"></i>刷弦練習
+    </button>
+    <button class="tab-btn" onclick="showTab('search', this)">
+      <i class="bi bi-search me-1"></i>搜尋吉他譜
+    </button>
+    <button class="tab-btn" onclick="showTab('songs', this)">
+      <i class="bi bi-list-stars me-1"></i>初學者歌單
+    </button>
+    <button class="tab-btn" onclick="showTab('playlist', this)">
+      <i class="bi bi-bookmark-heart me-1"></i>我的歌單
+    </button>
+    <button class="tab-btn" onclick="showTab('mytabs', this)">
+      <i class="bi bi-file-earmark-music me-1"></i>我的樂譜
+    </button>
+    <button class="tab-btn" onclick="showTab('videos', this)">
+      <i class="bi bi-play-circle me-1"></i>練習視頻
+    </button>
+    <button class="tab-btn" onclick="showTab('poplinks', this)">
+      <i class="bi bi-collection-play me-1"></i>流行教學
+    </button>
+  </div>
+
+  <!-- ── 和弦庫 ────────────────────────────────────────────────── -->
+  <div id="sec-chords" class="section visible">
+    <div class="tip-box mb-4">
+      <i class="bi bi-lightbulb-fill me-2"></i>
+      初學者建議從 <strong>C、G、Am、F</strong> 四個和弦開始，這四個和弦能彈出超過一千首歌！點擊和弦卡片查看指法詳情。
+    </div>
+
+    <!-- Category filter -->
+    <div class="d-flex gap-2 flex-wrap mb-3">
+      <button class="filter-btn active" onclick="filterChords('all', this)">全部</button>
+      <button class="filter-btn" onclick="filterChords('major', this)">大調</button>
+      <button class="filter-btn" onclick="filterChords('minor', this)">小調</button>
+      <button class="filter-btn" onclick="filterChords('seventh', this)">七和弦</button>
+    </div>
+
+    <!-- Chord grid -->
+    <div id="chord-grid" class="row g-2 row-cols-3 row-cols-sm-4 row-cols-md-6 row-cols-lg-8"></div>
+
+    <!-- Selected chord detail -->
+    <div id="chord-detail" class="chord-detail d-none">
+      <div class="row align-items-center g-4">
+        <div class="col-auto">
+          <canvas id="chord-canvas" width="140" height="168"></canvas>
+        </div>
+        <div class="col">
+          <h4 id="detail-name" class="mb-1" style="color:#c4b5fd"></h4>
+          <p id="detail-tip" class="text-secondary mb-2" style="font-size:0.85rem"></p>
+          <div id="detail-fingers" class="mb-2"></div>
+          <div id="detail-hint" class="tip-box mt-2" style="font-size:0.8rem"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 刷弦練習 ──────────────────────────────────────────────── -->
+  <div id="sec-strum" class="section">
+    <div class="tip-box mb-4">
+      <i class="bi bi-lightbulb-fill me-2"></i>
+      選擇刷弦型 → 設定速度 → 按開始，跟著節拍練習。初學者從 <strong>基本四下</strong> 開始，速度先設 60 BPM，熟了再加速。
+    </div>
+
+    <!-- Presets -->
+    <div class="mb-4">
+      <div class="small text-secondary mb-2 fw-bold">選擇刷法</div>
+      <div class="d-flex flex-wrap gap-2" id="preset-list"></div>
+    </div>
+
+    <!-- Strum board -->
+    <div class="strum-board mb-4">
+      <div class="small text-secondary mb-3 text-center" style="font-size:0.78rem; letter-spacing:.05em">
+        點擊格子切換刷法　↓ = 下刷　↑ = 上刷　✕ = 切音　空 = 跳過
+      </div>
+      <div class="beat-grid" id="beat-grid"></div>
+      <div class="beat-indicator mt-3" id="beat-indicator"></div>
+    </div>
+
+    <!-- Controls -->
+    <div class="d-flex flex-wrap align-items-center gap-4 justify-content-center mt-2">
+      <div class="bpm-control">
+        <button class="btn-strum btn-stop" onclick="changeBpm(-5)" style="padding:8px 14px;font-size:1rem">－</button>
+        <div>
+          <div class="bpm-num" id="bpm-display">80</div>
+          <div class="text-secondary text-center" style="font-size:0.65rem">BPM</div>
+        </div>
+        <button class="btn-strum btn-stop" onclick="changeBpm(5)" style="padding:8px 14px;font-size:1rem">＋</button>
+      </div>
+      <input type="range" class="bpm-slider" id="bpm-slider" min="40" max="200" value="80" oninput="setBpm(+this.value)" />
+      <div class="d-flex gap-2">
+        <button class="btn-strum btn-play" id="btn-strum-start" onclick="startStrum()">
+          <i class="bi bi-play-fill me-1"></i>開始
+        </button>
+        <button class="btn-strum btn-stop" id="btn-strum-stop" onclick="stopStrum()" disabled>
+          <i class="bi bi-stop-fill me-1"></i>停止
+        </button>
+      </div>
+    </div>
+
+    <!-- Tips for selected pattern -->
+    <div id="strum-tips" class="tip-box mt-4 d-none"></div>
+
+    <!-- Three-stage learning guide -->
+    <div class="mt-4">
+      <div class="small text-secondary fw-bold mb-3" style="letter-spacing:.06em">三階段學習法</div>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <div class="strum-board h-100">
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <span style="background:#312e81;color:#a78bfa;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0">1</span>
+              <span class="fw-bold" style="color:#c4b5fd">看懂符號</span>
+            </div>
+            <div style="font-size:0.82rem;color:#9ca3af;line-height:1.8">
+              <div><span style="color:#3b82f6;font-size:1.1rem">↓</span> <strong style="color:#e0e0e0">D（下刷）</strong> — 手腕朝地板方向刷過弦</div>
+              <div><span style="color:#10b981;font-size:1.1rem">↑</span> <strong style="color:#e0e0e0">U（上刷）</strong> — 手腕往上方向刷過弦</div>
+              <div><span style="color:#f59e0b;font-size:1.1rem">✕</span> <strong style="color:#e0e0e0">X（切音）</strong> — 左手輕放讓弦悶掉</div>
+              <div><span style="color:#374151;font-size:1.1rem">□</span> <strong style="color:#e0e0e0">空格</strong> — 手腕繼續擺但不碰弦</div>
+              <div class="mt-2" style="color:#6b7280">每一格 = 一個八分音符（半拍）</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="strum-board h-100">
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <span style="background:#312e81;color:#a78bfa;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0">2</span>
+              <span class="fw-bold" style="color:#c4b5fd">協調練習</span>
+            </div>
+            <div style="font-size:0.82rem;color:#9ca3af;line-height:1.9">
+              <div>① 先不彈琴，只在空中模擬手腕動作</div>
+              <div>② 嘴巴數拍：<span style="color:#e0e0e0">「1 & 2 & 3 & 4 &」</span></div>
+              <div>③ 手腕跟著節奏，按格子有刷就觸弦</div>
+              <div>④ 加入吉他，<span style="color:#e0e0e0">慢速</span>（40–60 BPM）確保每個動作清楚</div>
+              <div class="mt-2" style="color:#6b7280">重點是穩定，不是速度</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="strum-board h-100">
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <span style="background:#312e81;color:#a78bfa;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0">3</span>
+              <span class="fw-bold" style="color:#c4b5fd">節奏訓練</span>
+            </div>
+            <div style="font-size:0.82rem;color:#9ca3af;line-height:1.9">
+              <div>① 開啟節拍器（上方「開始」按鈕）</div>
+              <div>② 從 <span style="color:#e0e0e0">60 BPM</span> 開始，跟著聲音刷</div>
+              <div>③ 穩定後每次加 <span style="color:#e0e0e0">+5 BPM</span></div>
+              <div>④ 目標：原曲速度不看格子自然刷出來</div>
+              <div class="mt-2" style="color:#6b7280">也可點 YouTube 示範學習律動感</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 搜尋吉他譜 ──────────────────────────────────────────── -->
+  <div id="sec-search" class="section">
+    <div class="tip-box mb-3">
+      <i class="bi bi-info-circle-fill me-2"></i>
+      搜尋 <strong>Songsterr</strong> 吉他譜資料庫（以英文歌為主）。<strong>中文歌曲</strong>請使用下方平台連結直接跳轉搜尋。
+    </div>
+
+    <div class="row justify-content-center mb-3">
+      <div class="col-md-7">
+        <div class="d-flex gap-2">
+          <input type="text" id="search-input" class="search-input" placeholder="輸入歌名或歌手，例如：小幸運、告白氣球、Wonderwall..." />
+          <button class="btn btn-primary px-4" style="border-radius:10px;white-space:nowrap" onclick="doSearch()">
+            <i class="bi bi-search"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Platform direct search links (shown after user types) -->
+    <div id="platform-links" class="d-none row justify-content-center mb-4">
+      <div class="col-md-7">
+        <div class="small text-secondary mb-2"><i class="bi bi-box-arrow-up-right me-1"></i>在其他平台搜尋「<span id="platform-query-label"></span>」</div>
+        <div class="d-flex flex-wrap gap-2" id="platform-btns"></div>
+      </div>
+    </div>
+
+    <div id="search-results" class="row g-2 justify-content-center">
+      <div class="col-md-7 text-secondary text-center py-4">
+        <i class="bi bi-music-note fs-2 d-block mb-2"></i>
+        在上方輸入歌名開始搜尋
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 初學者歌單 ──────────────────────────────────────────── -->
+  <div id="sec-songs" class="section">
+    <div class="tip-box mb-4">
+      <i class="bi bi-star-fill me-2"></i>
+      精選適合初學者的歌曲，難度從易到難排列。點擊歌曲名稱可直接搜尋吉他譜。
+    </div>
+    <div class="d-flex gap-2 mb-3">
+      <button class="filter-btn active" onclick="filterSongs('all', this)">全部</button>
+      <button class="filter-btn" onclick="filterSongs('zh', this)">中文</button>
+      <button class="filter-btn" onclick="filterSongs('en', this)">英文</button>
+    </div>
+    <div id="song-list" class="row g-2"></div>
+  </div>
+
+  <!-- ── 我的歌單 ──────────────────────────────────────────── -->
+  <div id="sec-playlist" class="section">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <div class="d-flex gap-2 flex-wrap">
+        <button class="filter-btn active" onclick="filterPlaylist('all', this)">全部</button>
+        <button class="filter-btn" onclick="filterPlaylist('todo', this)">待練習</button>
+        <button class="filter-btn" onclick="filterPlaylist('learning', this)">練習中</button>
+        <button class="filter-btn" onclick="filterPlaylist('mastered', this)">已掌握</button>
+      </div>
+      <span class="small text-secondary" id="pl-count"></span>
+    </div>
+    <div id="playlist-list" class="row g-2"></div>
+  </div>
+
+  <!-- ── 我的樂譜 ──────────────────────────────────────────── -->
+  <div id="sec-mytabs" class="section">
+
+    <!-- Upload zone -->
+    <div class="upload-zone mb-3" id="upload-zone"
+         onclick="document.getElementById('tab-file-inp').click()">
+      <i class="bi bi-cloud-arrow-up fs-2 d-block mb-2" style="color:#7c3aed"></i>
+      點擊選擇，或把檔案拖曳到這裡
+      <div class="small mt-1">支援 PDF、PNG / JPG / GIF、TXT · 可一次選多張 · 最大 20 MB / 檔</div>
+    </div>
+    <input type="file" id="tab-file-inp" class="d-none" multiple
+           accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.txt,.tab">
+
+    <!-- Upload form (shown after file is selected) -->
+    <div id="tab-upload-form" class="d-none mb-4">
+      <!-- Selected file list -->
+      <div id="tab-file-list" class="mb-2 d-flex flex-wrap gap-2"></div>
+      <div class="row g-2 align-items-end">
+        <div class="col-md-5">
+          <label class="form-label small text-secondary mb-1">樂譜名稱（必填）</label>
+          <input type="text" id="tab-title" class="form-control form-control-sm" placeholder="例：小幸運 吉他譜">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label small text-secondary mb-1">歌手 / 作者（選填）</label>
+          <input type="text" id="tab-artist" class="form-control form-control-sm" placeholder="例：田馥甄">
+        </div>
+        <div class="col-auto">
+          <button class="btn btn-sm btn-primary" onclick="uploadTab()">
+            <i class="bi bi-cloud-arrow-up me-1"></i>上傳
+          </button>
+          <button class="btn btn-sm btn-outline-secondary ms-1" onclick="cancelTabUpload()">取消</button>
+        </div>
+      </div>
+      <div id="tab-upload-msg" class="small mt-2"></div>
+    </div>
+
+    <!-- Tabs grid -->
+    <div id="mytabs-grid" class="row g-2"></div>
+  </div>
+
+  <!-- ── 練習視頻 ──────────────────────────────────────────── -->
+  <div id="sec-videos" class="section">
+    <div class="tip-box mb-4">
+      <i class="bi bi-play-circle-fill me-2"></i>
+      輸入歌名或技巧名稱，在各大平台搜尋練習視頻。
+    </div>
+
+    <div class="row justify-content-center mb-4">
+      <div class="col-md-7">
+        <div class="d-flex gap-2">
+          <input type="text" id="video-search-inp" class="search-input"
+                 placeholder="例：告白氣球、F 和弦教學、Fingerpicking…" />
+          <button class="btn btn-primary px-4" style="border-radius:10px;white-space:nowrap"
+                  onclick="doVideoSearch()">
+            <i class="bi bi-search"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="video-platforms" class="row g-3"></div>
+  </div>
+
+  <!-- ── 流行歌曲教學連結 ────────────────────────────────────────────── -->
+  <div id="sec-poplinks" class="section">
+    <div class="tip-box mb-4">
+      <i class="bi bi-collection-play-fill me-2"></i>
+      流行歌曲教學網站收藏，點擊連結前往學習；可自由新增或刪除網站。
+    </div>
+
+    <div class="mb-4">
+      <div class="row g-2">
+        <div class="col-md-3">
+          <input type="text" id="poplink-name" class="search-input" placeholder="網站名稱（例：WEN GUITAR）" />
+        </div>
+        <div class="col-md-5">
+          <input type="url" id="poplink-url" class="search-input" placeholder="網址（例：https://...）" />
+        </div>
+        <div class="col-md-3">
+          <input type="text" id="poplink-desc" class="search-input" placeholder="簡短說明（選填）" />
+        </div>
+        <div class="col-md-1 d-flex align-items-center">
+          <button class="btn btn-primary w-100" style="border-radius:9px;white-space:nowrap" onclick="addPopLink()">
+            <i class="bi bi-plus-lg"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="poplinks-list" class="row g-3"></div>
+  </div>
+
+</div>
+
+<script>
+// ── Tab switching ──────────────────────────────────────────────────────────────
+function showTab(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-' + id).classList.add('visible');
+  btn.classList.add('active');
+}
+
+// ── Chord data ─────────────────────────────────────────────────────────────────
+// frets: [lowE, A, D, G, B, highE] — -1=muted, 0=open, N=fret
+const CHORDS = [
+  // Major
+  { key:'C',  cat:'major', name:'C 大調', frets:[-1,3,2,0,1,0], fingers:[0,3,2,0,1,0], base:1,
+    tip:'食指按 B 弦 1 格，中指按 D 弦 2 格，無名指按 A 弦 3 格。', hint:'初學必學！是最常見的開放和弦之一。' },
+  { key:'D',  cat:'major', name:'D 大調', frets:[-1,-1,0,2,3,2], fingers:[0,0,0,1,3,2], base:1,
+    tip:'食指按 G 弦 2 格，中指按 e 弦 2 格，無名指按 B 弦 3 格。', hint:'只用三根手指，Low E 和 A 弦不彈。' },
+  { key:'E',  cat:'major', name:'E 大調', frets:[0,2,2,1,0,0], fingers:[0,2,3,1,0,0], base:1,
+    tip:'食指按 G 弦 1 格，中指按 A 弦 2 格，無名指按 D 弦 2 格。', hint:'六條弦全部彈，聲音飽滿渾厚。' },
+  { key:'F',  cat:'major', name:'F 大調', frets:[1,1,2,3,3,1], fingers:[1,1,2,4,3,1], base:1,
+    tip:'食指橫壓第 1 格所有弦（大橫按），中指按 D 弦 2 格，無名指按 B 弦 3 格，小指按 G 弦 3 格。', hint:'⚠️ 初學難關！建議先練 Fmaj7 (x-x-3-2-1-0) 過渡。' },
+  { key:'G',  cat:'major', name:'G 大調', frets:[3,2,0,0,0,3], fingers:[2,1,0,0,0,4], base:1,
+    tip:'食指按 A 弦 2 格，中指按 Low E 弦 3 格，小指按 e 弦 3 格。', hint:'六弦全彈，聲音很響亮。與 C、D 搭配非常好用。' },
+  { key:'A',  cat:'major', name:'A 大調', frets:[-1,0,2,2,2,0], fingers:[0,0,1,2,3,0], base:1,
+    tip:'食指、中指、無名指分別按 D、G、B 弦的第 2 格。', hint:'三指排成一排。注意手指不要碰到 A 弦和 e 弦。' },
+  { key:'B',  cat:'major', name:'B 大調', frets:[-1,2,4,4,4,2], fingers:[0,1,2,3,4,1], base:2,
+    tip:'食指橫按第 2 格（A 和 e 弦），其餘三指按 4 格。', hint:'⚠️ 需要橫按技巧，初學者可以先跳過。' },
+  // Minor
+  { key:'Am', cat:'minor', name:'A 小調', frets:[-1,0,2,2,1,0], fingers:[0,0,2,3,1,0], base:1,
+    tip:'食指按 B 弦 1 格，中指按 D 弦 2 格，無名指按 G 弦 2 格。', hint:'⭐ 超常用！和 C、F、G 搭配可以彈出很多流行歌。' },
+  { key:'Dm', cat:'minor', name:'D 小調', frets:[-1,-1,0,2,3,1], fingers:[0,0,0,2,3,1], base:1,
+    tip:'食指按 e 弦 1 格，中指按 G 弦 2 格，無名指按 B 弦 3 格。', hint:'只彈 D G B e 四條弦。' },
+  { key:'Em', cat:'minor', name:'E 小調', frets:[0,2,2,0,0,0], fingers:[0,2,3,0,0,0], base:1,
+    tip:'中指按 A 弦 2 格，無名指按 D 弦 2 格，其餘空弦。', hint:'⭐ 最簡單的和弦之一，只需兩根手指！' },
+  { key:'Fm', cat:'minor', name:'F 小調', frets:[1,1,3,3,2,1], fingers:[1,1,3,4,2,1], base:1,
+    tip:'食指橫按第 1 格，中指按 B 弦 2 格，無名指和小指按 G 和 D 弦 3 格。', hint:'⚠️ 需要橫按，初學者可先跳過。' },
+  { key:'Bm', cat:'minor', name:'B 小調', frets:[-1,2,4,4,3,2], fingers:[0,1,3,4,2,1], base:2,
+    tip:'食指橫按第 2 格（A 和 e 弦），中指按 B 弦 3 格，無名指和小指按 G 和 D 弦 4 格。', hint:'需要橫按技巧。許多中文流行歌會用到。' },
+  // Seventh
+  { key:'G7', cat:'seventh', name:'G7', frets:[3,2,0,0,0,1], fingers:[3,2,0,0,0,1], base:1,
+    tip:'食指按 e 弦 1 格，中指按 A 弦 2 格，無名指按 Low E 弦 3 格。', hint:'在 C 大調歌曲中很常見的過渡和弦。' },
+  { key:'C7', cat:'seventh', name:'C7', frets:[-1,3,2,3,1,0], fingers:[0,3,2,4,1,0], base:1,
+    tip:'比 C 多按 G 弦第 3 格（小指）。', hint:'Blues 和爵士風格很常用。' },
+  { key:'D7', cat:'seventh', name:'D7', frets:[-1,-1,0,2,1,2], fingers:[0,0,0,2,1,3], base:1,
+    tip:'食指按 B 弦 1 格，中指按 G 弦 2 格，無名指按 e 弦 2 格。', hint:'鄉村和藍調風格很常見。' },
+  { key:'E7', cat:'seventh', name:'E7', frets:[0,2,0,1,0,0], fingers:[0,2,0,1,0,0], base:1,
+    tip:'比 E 少按一根手指：食指按 G 弦 1 格，中指按 A 弦 2 格。', hint:'比 E 更好按！有濃厚藍調味道。' },
+  { key:'A7', cat:'seventh', name:'A7', frets:[-1,0,2,0,2,0], fingers:[0,0,2,0,1,0], base:1,
+    tip:'食指按 B 弦 2 格，中指按 D 弦 2 格，G 弦空弦。', hint:'比 A 更輕鬆，交替 G 和 D 弦開放。' },
+];
+
+let selectedChord = null;
+let chordFilter = 'all';
+
+function filterChords(cat, btn) {
+  chordFilter = cat;
+  document.querySelectorAll('#sec-chords .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderChordGrid();
+}
+
+function renderChordGrid() {
+  const grid = document.getElementById('chord-grid');
+  const filtered = chordFilter === 'all' ? CHORDS : CHORDS.filter(c => c.cat === chordFilter);
+  grid.innerHTML = filtered.map(c => `
+    <div class="col">
+      <div class="chord-card ${selectedChord === c.key ? 'selected' : ''}" onclick="selectChord('${c.key}')">
+        <canvas id="mini-${c.key}" width="80" height="96"></canvas>
+        <div class="chord-label">${c.key}</div>
+        <div class="chord-sub">${c.name.replace(c.key + ' ', '')}</div>
+      </div>
+    </div>
+  `).join('');
+  filtered.forEach(c => {
+    const canvas = document.getElementById('mini-' + c.key);
+    if (canvas) drawChord(canvas, c, true);
+  });
+}
+
+function selectChord(key) {
+  selectedChord = key;
+  renderChordGrid();
+  const chord = CHORDS.find(c => c.key === key);
+  const detail = document.getElementById('chord-detail');
+  detail.classList.remove('d-none');
+  document.getElementById('detail-name').textContent = chord.name;
+  document.getElementById('detail-tip').textContent = chord.tip;
+  document.getElementById('detail-hint').innerHTML = `<i class="bi bi-lightbulb me-1"></i>${chord.hint}`;
+  const fingerNames = ['', '食指', '中指', '無名指', '小指'];
+  const used = chord.fingers
+    .map((f, i) => f > 0 ? `<span class="chord-tag">${fingerNames[f]} → 弦${6-i} 第${chord.frets[i]}格</span>` : '')
+    .filter(Boolean).join(' ');
+  document.getElementById('detail-fingers').innerHTML = used;
+  const canvas = document.getElementById('chord-canvas');
+  drawChord(canvas, chord, false);
+  detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ── Canvas chord diagram renderer ──────────────────────────────────────────────
+function drawChord(canvas, chord, mini) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const { frets, fingers, base } = chord;
+  const nStr = 6, nFrets = 4;
+  const lm = base > 1 ? (mini ? 16 : 22) : (mini ? 10 : 14);
+  const rm = mini ? 6 : 8;
+  const tm = mini ? 20 : 26;
+  const bm = mini ? 6 : 8;
+  const gW = W - lm - rm;
+  const gH = H - tm - bm;
+  const ss = gW / (nStr - 1);   // string spacing
+  const fs = gH / nFrets;        // fret spacing
+  const dotR = mini ? 5 : 7;
+
+  ctx.strokeStyle = '#4b5563';
+  ctx.lineWidth = 1;
+
+  // Fret lines
+  for (let f = 0; f <= nFrets; f++) {
+    const y = tm + f * fs;
+    if (f === 0 && base === 1) {
+      ctx.strokeStyle = '#d1d5db'; ctx.lineWidth = mini ? 2.5 : 3.5;
+    } else {
+      ctx.strokeStyle = '#374151'; ctx.lineWidth = 1;
+    }
+    ctx.beginPath(); ctx.moveTo(lm, y); ctx.lineTo(W - rm, y); ctx.stroke();
+  }
+
+  // String lines
+  ctx.strokeStyle = '#4b5563'; ctx.lineWidth = 1;
+  for (let s = 0; s < nStr; s++) {
+    const x = lm + s * ss;
+    ctx.beginPath(); ctx.moveTo(x, tm); ctx.lineTo(x, tm + nFrets * fs); ctx.stroke();
+  }
+
+  // Base fret number
+  if (base > 1) {
+    ctx.fillStyle = '#9ca3af';
+    ctx.font = `${mini ? 9 : 11}px system-ui`;
+    ctx.textAlign = 'right';
+    ctx.fillText(base + 'fr', lm - 3, tm + fs * 0.65);
+  }
+
+  // X / O / dots
+  for (let s = 0; s < nStr; s++) {
+    const x = lm + s * ss;
+    const fret = frets[s];
+    if (fret === -1) {
+      ctx.fillStyle = '#ef4444';
+      ctx.font = `bold ${mini ? 9 : 11}px system-ui`;
+      ctx.textAlign = 'center';
+      ctx.fillText('✕', x, tm - (mini ? 6 : 8));
+    } else if (fret === 0) {
+      ctx.strokeStyle = '#60a5fa'; ctx.lineWidth = mini ? 1 : 1.5;
+      ctx.beginPath(); ctx.arc(x, tm - (mini ? 8 : 10), mini ? 3.5 : 5, 0, Math.PI * 2); ctx.stroke();
+    } else {
+      const dotY = tm + (fret - base) * fs + fs / 2;
+      ctx.fillStyle = '#7c3aed';
+      ctx.beginPath(); ctx.arc(x, dotY, dotR, 0, Math.PI * 2); ctx.fill();
+      if (!mini && fingers[s] > 0) {
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 8px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText(fingers[s], x, dotY + 3);
+      }
+    }
+  }
+}
+
+// ── Search ─────────────────────────────────────────────────────────────────────
+async function doSearch() {
+  const q = document.getElementById('search-input').value.trim();
+  if (!q) return;
+
+  // Show platform links immediately
+  showPlatformLinks(q);
+
+  const container = document.getElementById('search-results');
+  container.innerHTML = '<div class="col-12 text-center py-4 text-secondary"><div class="spinner-border spinner-border-sm me-2"></div>搜尋中......</div>';
+  try {
+    const res = await fetch('/api/guitar/search?q=' + encodeURIComponent(q));
+    const songs = await res.json();
+
+    const sourceColor = { 'Songsterr': '#60a5fa', 'Ultimate Guitar': '#f87171' };
+    const sourceIcon  = { 'Songsterr': 'bi-music-note-list', 'Ultimate Guitar': 'bi-guitar' };
+
+    if (!songs.length) {
+      container.innerHTML = `<div class="col-md-7 text-secondary text-center py-3 mx-auto">
+        <i class="bi bi-emoji-neutral fs-2 d-block mb-2"></i>
+        Songsterr 和 Ultimate Guitar 都找不到「${q}」，請使用下方平台連結搜尋中文吉他譜。
+      </div>`;
+      return;
+    }
+    container.innerHTML = '<div class="col-md-7 mx-auto"><div class="row g-2">' +
+      songs.map(s => {
+        const clr = sourceColor[s.source] || '#9ca3af';
+        const ico = sourceIcon[s.source] || 'bi-music-note';
+        const titleE  = s.title.replace(/"/g, '&quot;');
+        const artistE = (s.artist || '').replace(/"/g, '&quot;');
+        const urlE    = s.url.replace(/"/g, '&quot;');
+        return `<div class="col-12">
+          <div class="result-card">
+            <div class="d-flex justify-content-between align-items-start">
+              <a href="${s.url}" target="_blank" rel="noopener">
+                <i class="bi bi-music-note me-1"></i>${s.title}
+              </a>
+              <span class="badge ms-2 flex-shrink-0" style="background:${clr}22;color:${clr};border:1px solid ${clr}44;font-size:0.7rem">
+                <i class="bi ${ico} me-1"></i>${s.source}
+              </span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-1">
+              <div class="result-artist"><i class="bi bi-person me-1"></i>${s.artist || '—'}</div>
+              <button class="btn-add-pl" onclick="plAddSearch(this)"
+                data-pl-title="${titleE}" data-pl-artist="${artistE}" data-pl-url="${urlE}"
+                title="加入我的歌單">
+                <i class="bi bi-bookmark-plus"></i> 加入歌單
+              </button>
+            </div>
+          </div>
+        </div>`;
+      }).join('') +
+    '</div></div>';
+  } catch {
+    container.innerHTML = '<div class="col-12 text-center py-4 text-danger">搜尋失敗，請稍後再試</div>';
+  }
+}
+
+function showPlatformLinks(q) {
+  const enc = encodeURIComponent(q);
+  const encZh = encodeURIComponent(q + ' 吉他譜');
+  const encYt = encodeURIComponent(q + ' guitar chords tutorial');
+  const platforms = [
+    { name: '吉他谱网',        color: '#f59e0b', icon: 'bi-file-music',      url: `https://www.jitapu.com/?s=${enc}` },
+    { name: '有谱 (yoopu)',    color: '#10b981', icon: 'bi-file-earmark-music', url: `https://www.yoopu.me/search?q=${enc}` },
+    { name: 'Ultimate Guitar', color: '#ef4444', icon: 'bi-music-note-beamed', url: `https://www.ultimate-guitar.com/search.php?search_type=title&value=${enc}` },
+    { name: 'Bilibili 教學',   color: '#3b82f6', icon: 'bi-play-circle',      url: `https://search.bilibili.com/all?keyword=${encZh}` },
+    { name: 'YouTube 教學',    color: '#dc2626', icon: 'bi-youtube',           url: `https://www.youtube.com/results?search_query=${encYt}` },
+  ];
+  document.getElementById('platform-query-label').textContent = q;
+  document.getElementById('platform-btns').innerHTML = platforms.map(p => `
+    <a href="${p.url}" target="_blank" rel="noopener"
+       style="background:#1a1d27;border:1px solid ${p.color}44;color:#e0e0e0;border-radius:8px;padding:5px 12px;text-decoration:none;font-size:0.82rem;display:inline-flex;align-items:center;gap:5px;transition:border-color .15s"
+       onmouseover="this.style.borderColor='${p.color}'" onmouseout="this.style.borderColor='${p.color}44'">
+      <i class="bi ${p.icon}" style="color:${p.color}"></i>${p.name}
+    </a>`).join('');
+  document.getElementById('platform-links').classList.remove('d-none');
+}
+
+document.getElementById('search-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSearch();
+});
+
+// ── Beginner songs ─────────────────────────────────────────────────────────────
+const SONGS = [
+  { title:'告白氣球', artist:'周杰倫', lang:'zh', diff:1, chords:['C','G','Am','F'], note:'四和弦輪流，超適合入門' },
+  { title:'倔強', artist:'五月天', lang:'zh', diff:1, chords:['Am','F','C','G'], note:'同樣四和弦，旋律簡單' },
+  { title:'海闊天空', artist:'Beyond', lang:'zh', diff:2, chords:['Am','F','C','G','E7'], note:'經典必學，速度稍快' },
+  { title:'小幸運', artist:'田馥甄', lang:'zh', diff:2, chords:['Bm','G','D','A'], note:'需要 Bm 橫按，其餘簡單' },
+  { title:'我願意', artist:'王菲', lang:'zh', diff:2, chords:['C','G','Am','F','Dm'], note:'慢板歌，練習和弦轉換好幫手' },
+  { title:'恰似你的溫柔', artist:'蔡琴', lang:'zh', diff:2, chords:['G','Em','Am','D'], note:'慢板，練習 pick 撥弦很適合' },
+  { title:'寧夏', artist:'梁靜茹', lang:'zh', diff:1, chords:['G','D','Em','C'], note:'旋律柔和，轉換慢' },
+  { title:'Horse With No Name', artist:'America', lang:'en', diff:1, chords:['Am','Em'], note:'⭐ 只有兩個和弦！完美入門首選' },
+  { title:"Knockin' on Heaven's Door", artist:'Bob Dylan', lang:'en', diff:1, chords:['G','D','Am','C'], note:'超慢節奏，三個開放和弦' },
+  { title:'Let Her Go', artist:'Passenger', lang:'en', diff:1, chords:['G','D','Em','C'], note:'很受歡迎，指法優美' },
+  { title:'Wonderwall', artist:'Oasis', lang:'en', diff:2, chords:['Em7','G','Dsus4','A7sus4'], note:'特殊和弦形狀，但聽起來很棒' },
+  { title:'Tears in Heaven', artist:'Eric Clapton', lang:'en', diff:3, chords:['A','E','F#m','C#m'], note:'優美旋律，需要一些練習' },
+];
+
+let songFilter = 'all';
+
+function filterSongs(f, btn) {
+  songFilter = f;
+  document.querySelectorAll('#sec-songs .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderSongs();
+}
+
+function renderSongs() {
+  const list = document.getElementById('song-list');
+  const filtered = songFilter === 'all' ? SONGS : SONGS.filter(s => s.lang === songFilter);
+  list.innerHTML = filtered.map(s => {
+    const stars = Array.from({length:3}, (_, i) =>
+      `<i class="bi bi-star-fill ${i < s.diff ? 'diff-star' : 'diff-empty'}"></i>`).join('');
+    const badge = s.lang === 'zh'
+      ? '<span class="badge cat-badge cat-zh">中文</span>'
+      : '<span class="badge cat-badge cat-en">English</span>';
+    const chordTags = s.chords.map(c => `<span class="chord-tag">${c}</span>`).join('');
+    const added = isInPlaylist(s.title, s.artist);
+    const titleEsc = s.title.replace(/"/g, '&quot;');
+    const artistEsc = s.artist.replace(/"/g, '&quot;');
+    const chordsJson = JSON.stringify(s.chords).replace(/"/g, '&quot;');
+    return `
+      <div class="col-md-6 col-lg-4">
+        <div class="song-card">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <span class="song-title">
+                <a href="#" onclick="jumpSearch('${s.title} ${s.artist}'); return false;"
+                   style="color:#e0e0e0;text-decoration:none" class="song-title-link">${s.title}</a>
+              </span>
+              <div class="song-artist">${s.artist}</div>
+            </div>
+            <div class="d-flex align-items-center gap-1 flex-wrap justify-content-end">
+              ${badge} <span>${stars}</span>
+              <button class="btn-add-pl ${added ? 'added' : ''}" onclick="plAddSong(this)"
+                data-pl-title="${titleEsc}" data-pl-artist="${artistEsc}" data-pl-chords="${chordsJson}"
+                title="${added ? '已在歌單中' : '加入我的歌單'}">
+                <i class="bi ${added ? 'bi-bookmark-fill' : 'bi-bookmark-plus'}"></i>
+              </button>
+            </div>
+          </div>
+          <div class="song-chords">${chordTags}</div>
+          <div style="font-size:0.75rem;color:#6b7280;margin-top:6px">${s.note}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function jumpSearch(query) {
+  document.getElementById('search-input').value = query;
+  showTab('search', document.querySelectorAll('.tab-btn')[1]);
+  doSearch();
+}
+
+// ── Strumming Practice ─────────────────────────────────────────────────────────
+
+// stroke values: 'D'=down, 'U'=up, 'X'=mute, ''=skip
+// beats: 8 = 4/4 time, 6 = 3/4 time
+const STRUM_PRESETS = [
+  {
+    name: '基本四下', diff: 1, bpm: 60, timeSig: '4/4', beats: 8,
+    strokes: ['D','','D','','D','','D',''],
+    yt: 'https://www.youtube.com/results?search_query=吉他+基本下刷+初學者+刷弦教學',
+    desc: '最簡單的起點，四拍各一下。',
+    tips: '每一下力道要平均，不要忽快忽慢。先從慢速開始，清楚聽到每一拍後再加速。'
+  },
+  {
+    name: '下上交替', diff: 1, bpm: 70, timeSig: '4/4', beats: 8,
+    strokes: ['D','U','D','U','D','U','D','U'],
+    yt: 'https://www.youtube.com/results?search_query=吉他+下上交替+刷弦+手腕練習',
+    desc: '手腕鐘擺運動，下刷上刷連續交替。',
+    tips: '手腕要像鐘擺一直擺動，只是有時候碰弦、有時候不碰。上下節奏要均勻。'
+  },
+  {
+    name: '流行刷法 A', diff: 2, bpm: 80, timeSig: '4/4', beats: 8,
+    strokes: ['D','','D','U','','U','D','U'],
+    yt: 'https://www.youtube.com/results?search_query=吉他+流行刷法+DU+告白氣球+刷弦教學',
+    desc: '最常見流行刷法，告白氣球、海闊天空都適用。',
+    tips: '2 & 拍手腕上刷但不碰弦，3 拍空過，讓節奏有律動感。最常出現在中文流行歌。'
+  },
+  {
+    name: '流行刷法 B', diff: 2, bpm: 80, timeSig: '4/4', beats: 8,
+    strokes: ['D','','D','U','D','U','','U'],
+    yt: 'https://www.youtube.com/results?search_query=吉他+流行刷法+變化+刷弦教學+初學',
+    desc: '流行刷法的另一種常見變形，加入 3 拍下刷。',
+    tips: '和流行刷法 A 相比，3 拍多了一個下刷，讓節奏更飽滿。可以兩種交替練習感受差異。'
+  },
+  {
+    name: '鄉村搖滾', diff: 2, bpm: 90, timeSig: '4/4', beats: 8,
+    strokes: ['D','','D','U','D','U','D','U'],
+    yt: 'https://www.youtube.com/results?search_query=吉他+鄉村搖滾+刷弦+教學+Country+Rock',
+    desc: '後半段連續下上，適合活潑節奏歌曲。',
+    tips: '3 拍開始手腕連續下上，要保持穩定不搶拍。可先放慢到 60 BPM 練清楚再加速。'
+  },
+  {
+    name: '慢板抒情', diff: 1, bpm: 55, timeSig: '4/4', beats: 8,
+    strokes: ['D','','','U','D','','','U'],
+    yt: 'https://www.youtube.com/results?search_query=吉他+慢歌+抒情+刷弦+教學+初學者',
+    desc: '空隙寬大，每個音有空間呼吸，適合慢歌。',
+    tips: '空格時手腕繼續擺動，只是不碰弦。下刷要厚實，上刷要輕柔，製造動態對比。'
+  },
+  {
+    name: 'Bossa Nova', diff: 2, bpm: 75, timeSig: '4/4', beats: 8,
+    strokes: ['D','','D','U','','D','U',''],
+    yt: 'https://www.youtube.com/results?search_query=吉他+Bossa+Nova+刷弦+教學+Brazilian',
+    desc: '巴薩諾瓦的特色切分節奏，帶有輕盈的拉丁律動。',
+    tips: '重點在 2 & 拍和 4 拍的關係，製造搖擺感。速度不要太快，感受律動比節拍更重要。'
+  },
+  {
+    name: '華爾滋', diff: 2, bpm: 65, timeSig: '3/4', beats: 6,
+    strokes: ['D','','D','','D',''],
+    yt: 'https://www.youtube.com/results?search_query=吉他+華爾滋+三拍+3拍+刷弦+教學',
+    desc: '三拍一小節的圓舞曲節奏，第一拍重、後兩拍輕。',
+    tips: '數「1—2—3—」，第 1 拍重力刷下，第 2、3 拍輕刷。許多古典和民謠歌曲用這個節奏。'
+  },
+  {
+    name: '搖擺藍調', diff: 3, bpm: 80, timeSig: '4/4', beats: 8,
+    strokes: ['D','','','D','U','D','U',''],
+    yt: 'https://www.youtube.com/results?search_query=吉他+藍調+shuffle+刷弦+Blues+教學',
+    desc: '藍調的 Shuffle 節奏感，帶有搖曳律動。',
+    tips: '重點在後半拍的重音。先練標準版再感受 Shuffle 的「跛腳」律動，不要打得太整齊。'
+  },
+  {
+    name: '切音節奏', diff: 3, bpm: 85, timeSig: '4/4', beats: 8,
+    strokes: ['D','','X','','D','U','X','U'],
+    yt: 'https://www.youtube.com/results?search_query=吉他+切音+刷弦+Mute+教學+進階',
+    desc: '加入切音（左手輕放）製造節奏感的進階刷法。',
+    tips: '切音時左手不離弦，輕放讓弦悶掉，刷下去發出「噠」的悶聲。先練無切音版本再加入。'
+  },
+  {
+    name: '搖滾進階', diff: 3, bpm: 95, timeSig: '4/4', beats: 8,
+    strokes: ['D','D','','U','D','U','D','U'],
+    yt: 'https://www.youtube.com/results?search_query=吉他+搖滾+刷弦+進階+Rock+教學',
+    desc: '開頭連續兩下，後半段密集上下，充滿能量。',
+    tips: '前兩格連續快速下刷，後半段要穩住速度。適合搖滾、龐克風格的歌曲。'
+  },
+];
+
+let strumBpm = 80;
+let strumPattern = [...STRUM_PRESETS[0].strokes];
+let strumPlaying = false;
+let audioCtx = null;
+let schedTimer = null;
+let nextNoteTime = 0;
+let strumBeat = 0;
+
+const STROKE_CONFIG = {
+  'D': { arrow: '↓', color: '#3b82f6', label: '下' },
+  'U': { arrow: '↑', color: '#10b981', label: '上' },
+  'X': { arrow: '✕', color: '#f59e0b', label: '切' },
+  '':  { arrow: '',  color: '',        label: '' },
+};
+const BEAT_LABELS = ['1','&','2','&','3','&','4','&'];
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playClick(isAccent, isStroke, when) {
+  const ctx = getAudioCtx();
+  if (!isStroke) return;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.type = 'sine';
+  osc.frequency.value = isAccent ? 1400 : 900;
+  gain.gain.setValueAtTime(isAccent ? 0.5 : 0.3, when);
+  gain.gain.exponentialRampToValueAtTime(0.001, when + 0.04);
+  osc.start(when);
+  osc.stop(when + 0.05);
+}
+
+function scheduleStrum() {
+  const ctx = getAudioCtx();
+  const beatDur = 60 / strumBpm / 2; // 8th note duration in seconds
+
+  while (nextNoteTime < ctx.currentTime + 0.12) {
+    const beat = strumBeat;
+    const stroke = strumPattern[beat];
+    const isAccent = beat === 0;
+    playClick(isAccent, stroke !== '', nextNoteTime);
+
+    // Visual update: schedule highlight at audio time
+    const delay = Math.max(0, (nextNoteTime - ctx.currentTime) * 1000);
+    ((b) => setTimeout(() => highlightBeat(b), delay))(beat);
+
+    strumBeat = (strumBeat + 1) % strumPattern.length;
+    nextNoteTime += beatDur;
+  }
+  schedTimer = setTimeout(scheduleStrum, 25);
+}
+
+function highlightBeat(beat) {
+  document.querySelectorAll('.beat-box').forEach((el, i) => {
+    el.classList.toggle('playing', i === beat);
+  });
+  document.querySelectorAll('.beat-dot').forEach((el, i) => {
+    // quarter note dots: highlight every 2 beats
+    el.classList.toggle('on', Math.floor(beat / 2) === i);
+  });
+}
+
+function startStrum() {
+  if (strumPlaying) return;
+  getAudioCtx().resume();
+  strumPlaying = true;
+  strumBeat = 0;
+  nextNoteTime = getAudioCtx().currentTime;
+  scheduleStrum();
+  document.getElementById('btn-strum-start').disabled = true;
+  document.getElementById('btn-strum-stop').disabled = false;
+}
+
+function stopStrum() {
+  strumPlaying = false;
+  clearTimeout(schedTimer);
+  document.querySelectorAll('.beat-box').forEach(el => el.classList.remove('playing'));
+  document.querySelectorAll('.beat-dot').forEach(el => el.classList.remove('on'));
+  document.getElementById('btn-strum-start').disabled = false;
+  document.getElementById('btn-strum-stop').disabled = true;
+}
+
+function setBpm(val) {
+  strumBpm = Math.max(40, Math.min(200, val));
+  document.getElementById('bpm-display').textContent = strumBpm;
+  document.getElementById('bpm-slider').value = strumBpm;
+}
+
+function changeBpm(delta) { setBpm(strumBpm + delta); }
+
+function cycleStroke(idx) {
+  const order = ['D', 'U', 'X', ''];
+  const cur = strumPattern[idx];
+  const next = order[(order.indexOf(cur) + 1) % order.length];
+  strumPattern[idx] = next;
+  renderBeatGrid();
+}
+
+const BEAT_LABELS_34 = ['1','&','2','&','3','&'];
+let currentPresetBeats = 8;
+
+function renderBeatGrid() {
+  const grid = document.getElementById('beat-grid');
+  const labels = currentPresetBeats === 6 ? BEAT_LABELS_34 : BEAT_LABELS;
+  const midpoint = currentPresetBeats === 8 ? 4 : -1; // bar divider position
+
+  const cells = strumPattern.slice(0, currentPresetBeats).map((stroke, i) => {
+    const cfg = STROKE_CONFIG[stroke];
+    const color = cfg.color || '#374151';
+    const divider = i === midpoint ? '<div class="bar-divider"></div>' : '';
+    const isFirstBeat = i === 0 || i === midpoint;
+    return `${divider}<div class="beat-cell">
+      <div class="beat-box" data-stroke="${stroke}" onclick="cycleStroke(${i})" title="點擊切換">
+        <span class="stroke-arrow" style="color:${color}">${cfg.arrow}</span>
+        ${cfg.label ? `<span class="stroke-label" style="color:${color}">${cfg.label}</span>` : ''}
+      </div>
+      <div class="beat-number ${isFirstBeat ? 'beat-1' : ''}">${labels[i]}</div>
+    </div>`;
+  }).join('');
+  grid.innerHTML = cells;
+
+  const numDots = currentPresetBeats / 2;
+  document.getElementById('beat-indicator').innerHTML =
+    Array.from({length: numDots}, (_, i) =>
+      `<div class="beat-dot" title="第${i+1}拍"></div>`).join('');
+}
+
+function selectPreset(idx, btn) {
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const p = STRUM_PRESETS[idx];
+  strumPattern = [...p.strokes];
+  currentPresetBeats = p.beats || 8;
+  setBpm(p.bpm);
+  renderBeatGrid();
+  if (strumPlaying) { stopStrum(); startStrum(); }
+
+  const tipEl = document.getElementById('strum-tips');
+  tipEl.innerHTML = `
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <span style="font-size:0.7rem;color:#a78bfa;font-weight:700;letter-spacing:.06em">${p.timeSig || '4/4'}</span>
+        <span class="ms-2 fw-bold">${p.name}</span>
+        <span class="ms-2 text-secondary" style="font-size:0.82rem">${p.desc}</span>
+        <div class="mt-1" style="font-size:0.82rem"><i class="bi bi-chat-dots me-1 text-secondary"></i>${p.tips}</div>
+      </div>
+      <a href="${p.yt}" target="_blank" rel="noopener"
+         style="background:#1a1d27;border:1px solid #ef444444;color:#fca5a5;border-radius:8px;padding:5px 12px;text-decoration:none;font-size:0.8rem;white-space:nowrap;flex-shrink:0">
+        <i class="bi bi-youtube me-1" style="color:#ef4444"></i>YouTube 示範
+      </a>
+    </div>`;
+  tipEl.classList.remove('d-none');
+}
+
+function renderPresets() {
+  const list = document.getElementById('preset-list');
+  const diffColor = ['','#60a5fa','#fbbf24','#f87171'];
+  const diffLabel = ['','入門','進階','挑戰'];
+  list.innerHTML = STRUM_PRESETS.map((p, i) => `
+    <button class="preset-btn ${i===0?'active':''}" onclick="selectPreset(${i}, this)">
+      <div class="d-flex align-items-center gap-2">
+        <span class="fw-bold" style="font-size:0.88rem">${p.name}</span>
+        <span style="font-size:0.68rem;color:${diffColor[p.diff]};background:${diffColor[p.diff]}22;padding:1px 6px;border-radius:4px">${diffLabel[p.diff]}</span>
+        <span style="font-size:0.68rem;color:#6b7280">${p.timeSig||'4/4'}</span>
+      </div>
+      <div style="font-size:0.72rem;color:#6b7280;margin-top:3px">${p.desc}</div>
+    </button>`).join('');
+  // Show tips for first preset
+  selectPreset(0, document.querySelector('.preset-btn'));
+}
+
+// ── 我的歌單 (localStorage) ─────────────────────────────────────────────────────
+const PL_KEY = 'guitar_playlist_v1';
+
+function loadPlaylist() {
+  try { return JSON.parse(localStorage.getItem(PL_KEY) || '[]'); } catch { return []; }
+}
+function savePlaylist(list) { localStorage.setItem(PL_KEY, JSON.stringify(list)); }
+function isInPlaylist(title, artist) {
+  return loadPlaylist().some(p => p.title === title && p.artist === artist);
+}
+
+function plAddSong(btn) {
+  const chords = JSON.parse(btn.dataset.plChords || '[]');
+  addToPlaylist(btn.dataset.plTitle, btn.dataset.plArtist, chords, '');
+}
+function plAddSearch(btn) {
+  addToPlaylist(btn.dataset.plTitle, btn.dataset.plArtist, [], btn.dataset.plUrl || '');
+}
+
+function addToPlaylist(title, artist, chords, tabUrl) {
+  const list = loadPlaylist();
+  if (list.some(p => p.title === title && p.artist === artist)) {
+    showToast(`「${title}」已在歌單中`);
+    return;
+  }
+  list.push({ id: Date.now().toString(), title, artist, chords, tabUrl,
+              status: 'todo', note: '', addedAt: new Date().toLocaleDateString('zh-TW') });
+  savePlaylist(list);
+  document.querySelectorAll('[data-pl-title]').forEach(btn => {
+    if (btn.dataset.plTitle === title && btn.dataset.plArtist === artist) {
+      btn.classList.add('added');
+      const icon = btn.querySelector('i');
+      if (icon) icon.className = 'bi bi-bookmark-fill';
+      btn.title = '已在歌單中';
+    }
+  });
+  showToast(`已加入「${title}」到我的歌單`);
+}
+
+function removeFromPlaylist(id) {
+  const item = loadPlaylist().find(p => p.id === id);
+  savePlaylist(loadPlaylist().filter(p => p.id !== id));
+  renderPlaylist();
+  if (item) {
+    document.querySelectorAll('[data-pl-title]').forEach(btn => {
+      if (btn.dataset.plTitle === item.title && btn.dataset.plArtist === item.artist) {
+        btn.classList.remove('added');
+        const icon = btn.querySelector('i');
+        if (icon) icon.className = 'bi bi-bookmark-plus';
+        btn.title = '加入我的歌單';
+      }
+    });
+  }
+}
+
+function cycleStatus(id) {
+  const order = ['todo', 'learning', 'mastered'];
+  const list = loadPlaylist();
+  const item = list.find(p => p.id === id);
+  if (!item) return;
+  item.status = order[(order.indexOf(item.status) + 1) % order.length];
+  savePlaylist(list);
+  renderPlaylist();
+}
+
+function updateNote(id, note) {
+  const list = loadPlaylist();
+  const item = list.find(p => p.id === id);
+  if (!item) return;
+  item.note = note;
+  savePlaylist(list);
+}
+
+const STATUS_LABEL = { todo: '待練習', learning: '練習中', mastered: '已掌握' };
+const STATUS_CLS   = { todo: 'status-todo', learning: 'status-learning', mastered: 'status-mastered' };
+let plFilter = 'all';
+
+function filterPlaylist(f, btn) {
+  plFilter = f;
+  document.querySelectorAll('#sec-playlist .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPlaylist();
+}
+
+function renderPlaylist() {
+  const all = loadPlaylist();
+  const list = plFilter === 'all' ? all : all.filter(p => p.status === plFilter);
+  const container = document.getElementById('playlist-list');
+  const countEl = document.getElementById('pl-count');
+  if (countEl) countEl.textContent = `共 ${all.length} 首`;
+
+  if (!all.length) {
+    container.innerHTML = `<div class="col-12 pl-empty">
+      <i class="bi bi-bookmark-heart fs-1 d-block mb-3"></i>
+      還沒有收藏歌曲<br>
+      <span class="small mt-1 d-block">從「初學者歌單」或搜尋結果點擊 <i class="bi bi-bookmark-plus"></i> 加入歌單</span>
+    </div>`;
+    return;
+  }
+  if (!list.length) {
+    container.innerHTML = `<div class="col-12 pl-empty">
+      <i class="bi bi-filter fs-1 d-block mb-3"></i>目前沒有「${STATUS_LABEL[plFilter]}」的歌曲
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = list.map(p => {
+    const chordTags = p.chords && p.chords.length
+      ? `<div class="song-chords mt-2">${p.chords.map(c => `<span class="chord-tag">${c}</span>`).join('')}</div>` : '';
+    const tabBtn = p.tabUrl
+      ? `<a href="${p.tabUrl}" target="_blank" rel="noopener"
+           style="font-size:0.75rem;color:#c4b5fd;text-decoration:none">
+           <i class="bi bi-music-note-list me-1"></i>查看吉他譜</a>` : '';
+    const titleEsc  = p.title.replace(/"/g, '&quot;');
+    const artistEsc = p.artist.replace(/"/g, '&quot;');
+    return `
+      <div class="col-md-6 col-lg-4">
+        <div class="playlist-card">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="song-title">
+                <a href="#" onclick="jumpSearch('${titleEsc} ${artistEsc}'); return false;"
+                   style="color:#e0e0e0;text-decoration:none">${p.title}</a>
+              </div>
+              <div class="song-artist">${p.artist}</div>
+            </div>
+            <button class="btn-delete" onclick="removeFromPlaylist('${p.id}')" title="從歌單移除">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+          <div class="d-flex align-items-center gap-2 mt-2 flex-wrap">
+            <button class="status-btn ${STATUS_CLS[p.status]}" onclick="cycleStatus('${p.id}')" title="點擊切換練習狀態">
+              ${STATUS_LABEL[p.status]}
+            </button>
+            ${tabBtn}
+            <span style="font-size:0.7rem;color:#4b5563;margin-left:auto">${p.addedAt}</span>
+          </div>
+          ${chordTags}
+          <textarea class="note-edit" rows="2" placeholder="記下練習筆記…（自動儲存）"
+            oninput="updateNote('${p.id}', this.value)">${p.note || ''}</textarea>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function showToast(msg) {
+  const el = document.createElement('div');
+  el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e1b35;border:1px solid #7c3aed;color:#c4b5fd;padding:10px 20px;border-radius:10px;font-size:0.88rem;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.5);pointer-events:none;white-space:nowrap;transition:opacity .3s';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 2200);
+}
+
+// ── 練習視頻搜尋 ────────────────────────────────────────────────────────────────
+const VIDEO_PLATFORMS = [
+  {
+    name: 'YouTube',
+    icon: 'bi-youtube', color: '#ff0000',
+    desc: '英文教學為主，進階技巧豐富',
+    buildUrl: q => `https://www.youtube.com/results?search_query=${encodeURIComponent(q + ' guitar tutorial')}`,
+    defaultUrl: 'https://www.youtube.com/results?search_query=guitar+tutorial+beginner',
+    tag: '最推薦',
+  },
+  {
+    name: 'Bilibili',
+    icon: 'bi-play-circle', color: '#00aeec',
+    desc: '中文教學豐富，中文歌曲首選',
+    buildUrl: q => `https://search.bilibili.com/all?keyword=${encodeURIComponent(q + ' 吉他 教學')}`,
+    defaultUrl: 'https://search.bilibili.com/all?keyword=吉他教學初學者',
+    tag: '中文',
+  },
+  {
+    name: 'TikTok',
+    icon: 'bi-music-note-beamed', color: '#fe2c55',
+    desc: '短片速成技巧，靈感來源',
+    buildUrl: q => `https://www.tiktok.com/search?q=${encodeURIComponent(q + ' guitar')}`,
+    defaultUrl: 'https://www.tiktok.com/search?q=guitar+tutorial',
+    tag: '短片',
+  },
+  {
+    name: '抖音',
+    icon: 'bi-music-note', color: '#010101',
+    desc: '中文短片教學，切音刷法多',
+    buildUrl: q => `https://www.douyin.com/search/${encodeURIComponent(q + ' 吉他')}`,
+    defaultUrl: 'https://www.douyin.com/search/吉他教學',
+    tag: '中文短片',
+  },
+  {
+    name: 'Instagram',
+    icon: 'bi-instagram', color: '#e1306c',
+    desc: 'Reels 示範，視覺化教學',
+    buildUrl: q => `https://www.instagram.com/explore/search/?q=${encodeURIComponent(q + ' guitar')}`,
+    defaultUrl: 'https://www.instagram.com/explore/search/?q=guitar',
+    tag: 'Reels',
+  },
+  {
+    name: 'Facebook',
+    icon: 'bi-facebook', color: '#1877f2',
+    desc: '社團討論、直播教學',
+    buildUrl: q => `https://www.facebook.com/search/videos/?q=${encodeURIComponent(q + ' guitar')}`,
+    defaultUrl: 'https://www.facebook.com/search/videos/?q=guitar+tutorial',
+    tag: '社團',
+  },
+];
+
+let videoQuery = '';
+
+function doVideoSearch() {
+  videoQuery = document.getElementById('video-search-inp').value.trim();
+  renderVideoPlatforms();
+}
+
+document.getElementById('video-search-inp').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doVideoSearch();
+});
+
+function renderVideoPlatforms() {
+  const container = document.getElementById('video-platforms');
+  container.innerHTML = VIDEO_PLATFORMS.map(p => {
+    const url = videoQuery ? p.buildUrl(videoQuery) : p.defaultUrl;
+    const queryLine = videoQuery
+      ? `<div class="platform-query"><i class="bi bi-search me-1"></i>「${videoQuery}」相關內容</div>` : '';
+    return `
+      <div class="col-md-4 col-sm-6">
+        <a href="${url}" target="_blank" rel="noopener" class="platform-card"
+           style="--pc:${p.color}">
+          <div class="d-flex justify-content-between align-items-start">
+            <i class="platform-icon bi ${p.icon}" style="color:${p.color}"></i>
+            <span style="font-size:0.65rem;background:${p.color}22;color:${p.color};border-radius:4px;padding:2px 7px;border:1px solid ${p.color}44">${p.tag}</span>
+          </div>
+          <div class="platform-name">${p.name}</div>
+          <div class="platform-desc">${p.desc}</div>
+          ${queryLine}
+        </a>
+      </div>`;
+  }).join('');
+}
+
+// ── 我的樂譜 (server-side storage) ─────────────────────────────────────────────
+let selectedTabFiles = [];
+
+const EXT_ICON = {
+  '.pdf':  { icon: 'bi-file-earmark-pdf',   color: '#ef4444' },
+  '.png':  { icon: 'bi-file-earmark-image', color: '#60a5fa' },
+  '.jpg':  { icon: 'bi-file-earmark-image', color: '#60a5fa' },
+  '.jpeg': { icon: 'bi-file-earmark-image', color: '#60a5fa' },
+  '.gif':  { icon: 'bi-file-earmark-image', color: '#60a5fa' },
+  '.webp': { icon: 'bi-file-earmark-image', color: '#60a5fa' },
+  '.txt':  { icon: 'bi-file-earmark-music', color: '#a78bfa' },
+  '.tab':  { icon: 'bi-file-earmark-music', color: '#a78bfa' },
+};
+
+function fmtSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+}
+
+function getExt(name) { return name.includes('.') ? '.' + name.split('.').pop().toLowerCase() : ''; }
+
+// Drag & drop
+const uploadZone = document.getElementById('upload-zone');
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('drag-over');
+  if (e.dataTransfer.files.length) handleFileSelect(e.dataTransfer.files);
+});
+
+document.getElementById('tab-file-inp').addEventListener('change', function() {
+  if (this.files.length) handleFileSelect(this.files);
+});
+
+function handleFileSelect(fileList) {
+  selectedTabFiles = Array.from(fileList);
+  // Pre-fill title from first filename (strip extension)
+  const titleInp = document.getElementById('tab-title');
+  if (!titleInp.value && selectedTabFiles.length) {
+    titleInp.value = selectedTabFiles[0].name.replace(/\.[^.]+$/, '');
+  }
+  renderFileList();
+  document.getElementById('tab-upload-form').classList.remove('d-none');
+}
+
+function renderFileList() {
+  const list = document.getElementById('tab-file-list');
+  list.innerHTML = selectedTabFiles.map((f, i) => {
+    const ext = getExt(f.name);
+    const ei = EXT_ICON[ext] || { icon: 'bi-file-earmark', color: '#9ca3af' };
+    return `<span style="background:#1e2130;border:1px solid #374151;border-radius:7px;padding:3px 10px;font-size:0.78rem;display:inline-flex;align-items:center;gap:5px">
+      <i class="bi ${ei.icon}" style="color:${ei.color}"></i>
+      ${f.name}
+      <span style="color:#4b5563">(${fmtSize(f.size)})</span>
+      <button onclick="removeFileFromList(${i})" style="background:none;border:none;color:#6b7280;cursor:pointer;padding:0;line-height:1;font-size:0.8rem" title="移除">✕</button>
+    </span>`;
+  }).join('');
+}
+
+function removeFileFromList(idx) {
+  selectedTabFiles.splice(idx, 1);
+  if (!selectedTabFiles.length) {
+    cancelTabUpload();
+  } else {
+    renderFileList();
+  }
+}
+
+function cancelTabUpload() {
+  selectedTabFiles = [];
+  document.getElementById('tab-upload-form').classList.add('d-none');
+  document.getElementById('tab-file-inp').value = '';
+  document.getElementById('tab-title').value = '';
+  document.getElementById('tab-artist').value = '';
+  document.getElementById('tab-file-list').innerHTML = '';
+  document.getElementById('tab-upload-msg').textContent = '';
+}
+
+async function uploadTab() {
+  if (!selectedTabFiles.length) return;
+  const title = document.getElementById('tab-title').value.trim();
+  if (!title) {
+    document.getElementById('tab-upload-msg').innerHTML = '<span class="text-danger">請填寫樂譜名稱</span>';
+    return;
+  }
+  const artist = document.getElementById('tab-artist').value.trim();
+  const msg = document.getElementById('tab-upload-msg');
+  msg.innerHTML = '<span class="text-secondary">上傳中...</span>';
+
+  const fd = new FormData();
+  selectedTabFiles.forEach(f => fd.append('files', f));
+  fd.append('title', title);
+  fd.append('artist', artist);
+
+  try {
+    const res = await fetch('/api/tabs/upload', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.error) {
+      msg.innerHTML = `<span class="text-danger">${data.error}</span>`;
+    } else {
+      cancelTabUpload();
+      loadMyTabs();
+      showToast(`已上傳「${title}」`);
+    }
+  } catch {
+    msg.innerHTML = '<span class="text-danger">上傳失敗，請稍後再試</span>';
+  }
+}
+
+async function loadMyTabs() {
+  try {
+    const res = await fetch('/api/tabs');
+    renderMyTabs(await res.json());
+  } catch { renderMyTabs([]); }
+}
+
+function renderMyTabs(tabs) {
+  const grid = document.getElementById('mytabs-grid');
+  if (!tabs.length) {
+    grid.innerHTML = `<div class="col-12 pl-empty">
+      <i class="bi bi-file-earmark-music fs-1 d-block mb-3"></i>
+      還沒有上傳任何樂譜<br>
+      <span class="small mt-1 d-block">用上方拖曳區或點擊選擇檔案上傳</span>
+    </div>`;
+    return;
+  }
+  grid.innerHTML = tabs.map(t => {
+    const files = t.files || [];
+    const total = files.reduce((s, f) => s + (f.size || 0), 0);
+    const typeIcons = [...new Set(files.map(f => f.ext))].map(ext => {
+      const ei = EXT_ICON[ext] || { icon: 'bi-file-earmark', color: '#9ca3af' };
+      return `<i class="bi ${ei.icon}" style="color:${ei.color};font-size:1rem"></i>`;
+    }).join('');
+    return `
+      <div class="col-md-6 col-lg-4" id="tabcard-${t.id}">
+        <div class="tab-card h-100 d-flex flex-column">
+          <div class="d-flex align-items-start gap-2 flex-grow-1">
+            <div class="d-flex flex-column align-items-center gap-1 pt-1" style="min-width:28px">
+              ${typeIcons}
+            </div>
+            <div class="flex-grow-1">
+              <div class="song-title">${t.title}</div>
+              ${t.artist ? `<div class="song-artist">${t.artist}</div>` : ''}
+              <div style="font-size:0.72rem;color:#4b5563;margin-top:3px">
+                ${files.length} 頁 · ${fmtSize(total)} · ${t.uploaded_at}
+              </div>
+            </div>
+            <button class="btn-delete flex-shrink-0" onclick="deleteTab('${t.id}','${t.title.replace(/'/g, "\\'")}')">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+          <div class="mt-3 d-flex gap-2">
+            <a href="/tabs/${t.id}" target="_blank" rel="noopener"
+               class="btn btn-sm btn-primary flex-grow-1" style="font-size:0.8rem;border-radius:7px">
+              <i class="bi bi-eye me-1"></i>查看所有頁面
+            </a>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function deleteTab(id, title) {
+  if (!confirm(`確定要刪除「${title}」的所有頁面？`)) return;
+  try {
+    const res = await fetch(`/api/tabs/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById(`tabcard-${id}`)?.remove();
+      const grid = document.getElementById('mytabs-grid');
+      if (!grid.children.length) loadMyTabs();
+      showToast(`已刪除「${title}」`);
+    }
+  } catch { showToast('刪除失敗'); }
+}
+
+// ── 流行歌曲教學連結 ────────────────────────────────────────────────────────────
+const POP_LINK_KEY = 'guitarPopLinks';
+
+const POP_LINK_DEFAULTS = [
+  { id: 'pl1', name: 'WEN GUITAR 流行歌曲', url: 'https://wenguitar01.co/popmusic/', desc: '中文流行歌曲完整教學，附影片示範' },
+  { id: 'pl2', name: 'The ONE Guitar',       url: 'https://www.theoneguitar.com.tw/', desc: '台灣吉他教學平台，課程豐富' },
+  { id: 'pl3', name: 'JustinGuitar',         url: 'https://www.justinguitar.com/',    desc: '全球最受歡迎免費吉他課程' },
+  { id: 'pl4', name: 'Ultimate Guitar',      url: 'https://www.ultimate-guitar.com/', desc: '百萬首吉他譜與和弦資料庫' },
+  { id: 'pl5', name: 'Chordify',             url: 'https://chordify.net/',            desc: '任意歌曲自動分析和弦，即時跟彈' },
+  { id: 'pl6', name: 'Guitar World',         url: 'https://www.guitarworld.com/',     desc: '吉他技巧文章、流行曲教學與評測' },
+  { id: 'pl7', name: 'Musicnotes',           url: 'https://www.musicnotes.com/',      desc: '正版樂譜購買與下載' },
+  { id: 'pl8', name: 'Songsterr',            url: 'https://www.songsterr.com/',       desc: '互動式吉他 TAB，可逐格播放' },
+];
+
+function loadPopLinks() {
+  const saved = localStorage.getItem(POP_LINK_KEY);
+  return saved ? JSON.parse(saved) : [...POP_LINK_DEFAULTS];
+}
+
+function savePopLinks(links) {
+  localStorage.setItem(POP_LINK_KEY, JSON.stringify(links));
+}
+
+function renderPopLinks() {
+  const links = loadPopLinks();
+  const container = document.getElementById('poplinks-list');
+  if (!links.length) {
+    container.innerHTML = `<div class="col-12 pl-empty">
+      <i class="bi bi-link-45deg fs-1 d-block mb-3"></i>
+      還沒有任何連結，請用上方表單新增。
+    </div>`;
+    return;
+  }
+  container.innerHTML = links.map(lk => `
+    <div class="col-md-6 col-lg-4" id="poplk-${lk.id}">
+      <div class="poplink-card">
+        <div class="flex-grow-1" style="min-width:0">
+          <a href="${lk.url}" target="_blank" rel="noopener"
+             class="d-flex align-items-center gap-2 text-decoration-none mb-1"
+             style="color:#c4b5fd;font-weight:600;word-break:break-all">
+            <i class="bi bi-link-45deg flex-shrink-0"></i>${lk.name}
+            <i class="bi bi-box-arrow-up-right flex-shrink-0" style="font-size:0.7rem;color:#6b7280"></i>
+          </a>
+          ${lk.desc ? `<div style="font-size:0.78rem;color:#6b7280;margin-bottom:4px">${lk.desc}</div>` : ''}
+          <div style="font-size:0.68rem;color:#374151;word-break:break-all">${lk.url}</div>
+        </div>
+        <button onclick="deletePopLink('${lk.id}')"
+                style="background:none;border:none;color:#4b5563;cursor:pointer;flex-shrink:0;font-size:1rem;padding:2px 6px;border-radius:5px;transition:color .15s"
+                onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#4b5563'"
+                title="刪除">
+          <i class="bi bi-trash"></i>
+        </button>
+      </div>
+    </div>`
+  ).join('');
+}
+
+function addPopLink() {
+  const name = document.getElementById('poplink-name').value.trim();
+  const url  = document.getElementById('poplink-url').value.trim();
+  const desc = document.getElementById('poplink-desc').value.trim();
+  if (!name || !url) { showToast('請填寫網站名稱和網址'); return; }
+  if (!url.startsWith('http')) { showToast('網址需以 http:// 或 https:// 開頭'); return; }
+  const links = loadPopLinks();
+  links.push({ id: Date.now().toString(), name, url, desc });
+  savePopLinks(links);
+  document.getElementById('poplink-name').value = '';
+  document.getElementById('poplink-url').value  = '';
+  document.getElementById('poplink-desc').value = '';
+  renderPopLinks();
+  showToast(`已新增「${name}」`);
+}
+
+['poplink-name','poplink-url','poplink-desc'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', e => {
+    if (e.key === 'Enter') addPopLink();
+  });
+});
+
+function deletePopLink(id) {
+  const links = loadPopLinks().filter(lk => lk.id !== id);
+  savePopLinks(links);
+  document.getElementById(`poplk-${id}`)?.remove();
+  if (!document.getElementById('poplinks-list').children.length) renderPopLinks();
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────────
+renderChordGrid();
+renderSongs();
+renderBeatGrid();
+renderPresets();
+renderPlaylist();
+loadMyTabs();
+renderVideoPlatforms();
+renderPopLinks();
+</script>
+</body>
+</html>

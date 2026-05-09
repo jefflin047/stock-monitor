@@ -1,0 +1,7 @@
+cache.json
+tabs.json
+watchlist.json
+server.log
+uploads/
+__pycache__/
+*.pyc
